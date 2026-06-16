@@ -10,7 +10,6 @@ import {
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 function ManagerDashboard() {
-  // PERBAIKAN: Default diatur ke 'All' agar pertama kali dimuat langsung menampilkan ranking gabungan
   const [category, setCategory] = useState('All');
   const [ranking, setRanking] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -142,12 +141,12 @@ function ManagerDashboard() {
               <p className="text-slate-500 text-xs sm:text-sm">Pantau hasil rekomendasi otomatisasi peringkat pelamar magang berdasarkan bobot kriteria aktif.</p>
             </div>
 
-            {/* FILTER KATEGORI (DIKONSISTENKAN DENGAN PILIHAN SEMUA KATEGORI) */}
+            {/* FILTER KATEGORI */}
             <div className="flex items-center gap-2.5">
               <Filter className="w-4 h-4 text-slate-400" />
               <div className="inline-flex bg-white border border-slate-200 rounded-full p-1 shadow-sm">
                 <button onClick={() => setCategory('All')} className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wide transition-all ${category === 'All' ? 'bg-slate-950 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Semua Kategori</button>
-                <button onClick={() => setCategory('Final Year')} className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wide transition-all ${category === 'Final Year' ? 'bg-slate-950 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Mahasiswa Tingkat Akh</button>
+                <button onClick={() => setCategory('Final Year')} className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wide transition-all ${category === 'Final Year' ? 'bg-slate-950 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Mahasiswa Tingkat Akhir</button>
                 <button onClick={() => setCategory('Fresh Graduate')} className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wide transition-all ${category === 'Fresh Graduate' ? 'bg-slate-950 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Lulusan Baru</button>
               </div>
               <button onClick={() => fetchRanking(category)} className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:border-sky-400 rounded-full text-[11px] font-bold text-slate-500 hover:text-sky-600 transition-all shadow-sm"><RefreshCw className="w-3.5 h-3.5" /> Segarkan Halaman</button>
