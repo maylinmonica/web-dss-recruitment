@@ -1,0 +1,37 @@
+[
+  {
+    "email": "ta@perusahaan.com",
+    "password": "passwordTA2026",
+    "role": "Talent Acquisition"
+  },
+  {
+    "email": "manager@perusahaan.com",
+    "password": "passwordManager2026",
+    "role": "HR Manager"
+  },
+  {
+    "email": "maylinthelaw@gmail.com",
+    "password": "$2a$10$QcIak9EW8H/RTjf4m1jLqOiu8ksZK6lQbOue.SfkwHmYdAXYDaZ2.",
+    "role": "Applicant"
+  },
+  {
+    "email": "maylinthelaw1@gmail.com",
+    "password": "$2a$10$nFo.ClTziFs1Ph1ctFAUI.y7YRhanL.9u5Y8Hc.33l33CPzodGO6W",
+    "role": "Applicant"
+  },
+  {
+    "email": "maylinthelaw2@gmail.com",
+    "password": "$2a$10$SBUql64ldYqG5D3RtTe4S.iVAVvSP5SS0D3rZMoBfhd/yhcGWrEYq",
+    "role": "Applicant"
+  },
+  {
+    "email": "monica@gmail.com",
+    "password": "$2a$10$T08Zk3Z3hDjDFm8BtvG/.O39MImlgVJWduAKzD1u6VIap1pQmD/kq",
+    "role": "Applicant"
+  },
+  {
+    "email": "may@gmail.com",
+    "password": "$2a$10$5zVTSZKwDB0kD0SEpcGsc.AFRsBpF.uuo53724B9AOpUjPEiYgVxW",
+    "role": "Applicant"
+  }
+]

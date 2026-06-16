@@ -1,0 +1,18 @@
+{
+  "weights": {
+    "c1": 0.15,
+    "c2": 0.3,
+    "c3": 0.1,
+    "c4": 0.1,
+    "c5": 0.25,
+    "c6": 0.1
+  },
+  "attributes": {
+    "c1": "benefit",
+    "c2": "benefit",
+    "c3": "benefit",
+    "c4": "benefit",
+    "c5": "benefit",
+    "c6": "cost"
+  }
+}

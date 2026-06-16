@@ -1,0 +1,138 @@
+[
+  {
+    "id": "1",
+    "name": "A1",
+    "category": "Final Year",
+    "c1_gpa": 3.92,
+    "c2_portfolio": 5,
+    "c3_experience": 4,
+    "c4_merits": 4,
+    "c5_skills": 5,
+    "c6_salary": 2000000,
+    "status": "Verified"
+  },
+  {
+    "id": "2",
+    "name": "A2",
+    "category": "Final Year",
+    "c1_gpa": 3.78,
+    "c2_portfolio": 4,
+    "c3_experience": 5,
+    "c4_merits": 5,
+    "c5_skills": 4,
+    "c6_salary": 1800000,
+    "status": "Verified"
+  },
+  {
+    "id": "3",
+    "name": "A3",
+    "category": "Final Year",
+    "c1_gpa": 3.55,
+    "c2_portfolio": 3,
+    "c3_experience": 3,
+    "c4_merits": 4,
+    "c5_skills": 4,
+    "c6_salary": 1500000,
+    "status": "Verified"
+  },
+  {
+    "id": "4",
+    "name": "A4",
+    "category": "Final Year",
+    "c1_gpa": 3.88,
+    "c2_portfolio": 5,
+    "c3_experience": 2,
+    "c4_merits": 3,
+    "c5_skills": 5,
+    "c6_salary": 2500000,
+    "status": "Verified",
+    "interviewDetails": {
+      "isPassed": true,
+      "status": "Scheduled",
+      "date": "2026-06-23",
+      "time": "01:00",
+      "link": "http://localhost:5173/manager/dashboard",
+      "rescheduleRequest": null
+    }
+  },
+  {
+    "id": "5",
+    "name": "A5",
+    "category": "Fresh Graduate",
+    "c1_gpa": 3.65,
+    "c2_portfolio": 4,
+    "c3_experience": 4,
+    "c4_merits": 5,
+    "c5_skills": 3,
+    "c6_salary": 1700000,
+    "status": "Verified"
+  },
+  {
+    "id": "6",
+    "name": "A6",
+    "category": "Fresh Graduate",
+    "c1_gpa": 3.96,
+    "c2_portfolio": 5,
+    "c3_experience": 5,
+    "c4_merits": 4,
+    "c5_skills": 5,
+    "c6_salary": 3000000,
+    "status": "Verified"
+  },
+  {
+    "id": "7",
+    "name": "A7",
+    "category": "Fresh Graduate",
+    "c1_gpa": 3.42,
+    "c2_portfolio": 3,
+    "c3_experience": 4,
+    "c4_merits": 2,
+    "c5_skills": 3,
+    "c6_salary": 1400000,
+    "status": "Verified"
+  },
+  {
+    "id": "8",
+    "name": "A8",
+    "category": "Fresh Graduate",
+    "c1_gpa": 3.75,
+    "c2_portfolio": 4,
+    "c3_experience": 3,
+    "c4_merits": 4,
+    "c5_skills": 4,
+    "c6_salary": 1600000,
+    "status": "Verified"
+  },
+  {
+    "id": "9",
+    "name": "A9",
+    "category": "Final Year",
+    "c1_gpa": 3.85,
+    "c2_portfolio": 5,
+    "c3_experience": 4,
+    "c4_merits": 5,
+    "c5_skills": 5,
+    "c6_salary": 2200000,
+    "status": "Verified",
+    "interviewDetails": {
+      "isPassed": true,
+      "status": "Scheduled",
+      "date": "2026-06-10",
+      "time": "02:00",
+      "link": "http://localhost:5173/manager/dashboard"
+    }
+  },
+  {
+    "id": "10",
+    "email": "maylinthelaw@gmail.com",
+    "name": "A10",
+    "category": "Final Year",
+    "c1_gpa": 3.5,
+    "c2_portfolio": 2,
+    "c3_experience": 3,
+    "c4_merits": 3,
+    "c5_skills": 3,
+    "c6_salary": 1300000,
+    "status": "Verified"
+  }
+]

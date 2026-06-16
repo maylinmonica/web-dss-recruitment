@@ -1,0 +1,33 @@
+.font-display {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.font-sans {
+  font-family: 'Inter', sans-serif;
+}
+
+/* Mengunci standardisasi layout padding halaman magang */
+.main-workspace-container {
+  max-width: 64rem; /* max-w-5xl */
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Styling tabel komputasi TOPSIS (dipindah dari ComputationPage.jsx) */
+.tbl th, .tbl td {
+  padding: 14px 18px;
+  font-size: 12px;
+  white-space: nowrap;
+  border-bottom: 1px solid #f1f5f9;
+}
+.tbl th {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: #94a3b8;
+  font-size: 10px;
+}
+.tbl tbody tr:hover {
+  background: #f8fafc;
+}
