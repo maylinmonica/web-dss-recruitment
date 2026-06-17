@@ -47,11 +47,10 @@ const initDatabase = async () => {
     await client.query(queryCreateTableApplicants);
     console.log('✅ PostgreSQL: Semua tabel siap digunakan!');
 
-    // 2. AUTO SEEDER TABEL USERS: Cek apakah akun TA & Manager sudah ada
-    const userCountResult = await client.query('SELECT COUNT(*) FROM users');
-    if (parseInt(userCountResult.rows[0].count, 10) === 0) {
+    // 2. SEEDER USERS: Cek spesifik berdasarkan email ta@perusahaan.com
+    const taCheck = await client.query("SELECT * FROM users WHERE email = 'ta@perusahaan.com'");
+    if (taCheck.rows.length === 0) {
       console.log('🌱 Melakukan seeding akun default (TA & Manager)...');
-      
       await client.query(`
         INSERT INTO users (email, password, role) VALUES 
         ('ta@perusahaan.com', 'passwordTA2026', 'Talent Acquisition'),
@@ -60,22 +59,23 @@ const initDatabase = async () => {
       console.log('✅ Akun default TA & Manager berhasil dimasukkan!');
     }
 
-    // 3. AUTO SEEDER TABEL APPLICANTS: Cek apakah pelamar A1-A10 sudah ada
-    const applicantCountResult = await client.query('SELECT COUNT(*) FROM applicants');
-    if (parseInt(applicantCountResult.rows[0].count, 10) === 0) {
-      console.log('🌱 Melakukan seeding data pelamar bawaan (A1 - A10) untuk TOPSIS...');
+    // 3. SEEDER APPLICANTS: Cek spesifik berdasarkan email a1@test.com
+    const a1Check = await client.query("SELECT * FROM applicants WHERE email = 'a1@test.com'");
+    if (a1Check.rows.length === 0) {
+      console.log('🌱 Melakukan seeding data pelamar bawaan (A1 - A10)...');
 
+      // PERBAIKAN: Status diubah menjadi 'Unverified' agar muncul di halaman Validasi Dokumen TA kamu
       const defaultApplicants = [
-        { email: "a1@test.com", name: "A1", category: "Final Year", c1_gpa: 3.92, c2_portfolio: 5, c3_experience: 4, c4_merits: 4, c5_skills: 5, c6_salary: 2000000, status: "Verified", interviewDetails: { isPassed: false, status: "Locked", date: "", time: "", link: "", rescheduleRequest: null } },
-        { email: "a2@test.com", name: "A2", category: "Final Year", c1_gpa: 3.78, c2_portfolio: 4, c3_experience: 5, c4_merits: 5, c5_skills: 4, c6_salary: 1800000, status: "Verified", interviewDetails: { isPassed: false, status: "Locked", date: "", time: "", link: "", rescheduleRequest: null } },
-        { email: "a3@test.com", name: "A3", category: "Final Year", c1_gpa: 3.55, c2_portfolio: 3, c3_experience: 3, c4_merits: 4, c5_skills: 4, c6_salary: 1500000, status: "Verified", interviewDetails: { isPassed: false, status: "Locked", date: "", time: "", link: "", rescheduleRequest: null } },
-        { email: "a4@test.com", name: "A4", category: "Final Year", c1_gpa: 3.88, c2_portfolio: 5, c3_experience: 2, c4_merits: 3, c5_skills: 5, c6_salary: 2500000, status: "Verified", interviewDetails: { isPassed: true, status: "Scheduled", date: "2026-06-23", time: "01:00", link: "http://localhost:5173/manager/dashboard", rescheduleRequest: null } },
-        { email: "a5@test.com", name: "A5", category: "Fresh Graduate", c1_gpa: 3.65, c2_portfolio: 4, c3_experience: 4, c4_merits: 5, c5_skills: 3, c6_salary: 1700000, status: "Verified", interviewDetails: { isPassed: false, status: "Locked", date: "", time: "", link: "", rescheduleRequest: null } },
-        { email: "a6@test.com", name: "A6", category: "Fresh Graduate", c1_gpa: 3.96, c2_portfolio: 5, c3_experience: 5, c4_merits: 4, c5_skills: 5, c6_salary: 3000000, status: "Verified", interviewDetails: { isPassed: false, status: "Locked", date: "", time: "", link: "", rescheduleRequest: null } },
-        { email: "a7@test.com", name: "A7", category: "Fresh Graduate", c1_gpa: 3.42, c2_portfolio: 3, c3_experience: 4, c4_merits: 2, c5_skills: 3, c6_salary: 1400000, status: "Verified", interviewDetails: { isPassed: false, status: "Locked", date: "", time: "", link: "", rescheduleRequest: null } },
-        { email: "a8@test.com", name: "A8", category: "Fresh Graduate", c1_gpa: 3.75, c2_portfolio: 4, c3_experience: 3, c4_merits: 4, c5_skills: 4, c6_salary: 1600000, status: "Verified", interviewDetails: { isPassed: false, status: "Locked", date: "", time: "", link: "", rescheduleRequest: null } },
-        { email: "a9@test.com", name: "A9", category: "Final Year", c1_gpa: 3.85, c2_portfolio: 5, c3_experience: 4, c4_merits: 5, c5_skills: 5, c6_salary: 2200000, status: "Verified", interviewDetails: { isPassed: true, status: "Scheduled", date: "2026-06-10", time: "02:00", link: "http://localhost:5173/manager/dashboard", rescheduleRequest: null } },
-        { email: "maylinthelaw@gmail.com", name: "A10", category: "Final Year", c1_gpa: 3.5, c2_portfolio: 2, c3_experience: 3, c4_merits: 3, c5_skills: 3, c6_salary: 1300000, status: "Verified", interviewDetails: { isPassed: false, status: "Locked", date: "", time: "", link: "", rescheduleRequest: null } }
+        { email: "a1@test.com", name: "A1", category: "Final Year", c1_gpa: 3.92, c2_portfolio: 1, c3_experience: 1, c4_merits: 1, c5_skills: 1, c6_salary: 2000000, status: "Unverified" },
+        { email: "a2@test.com", name: "A2", category: "Final Year", c1_gpa: 3.78, c2_portfolio: 1, c3_experience: 1, c4_merits: 1, c5_skills: 1, c6_salary: 1800000, status: "Unverified" },
+        { email: "a3@test.com", name: "A3", category: "Final Year", c1_gpa: 3.55, c2_portfolio: 1, c3_experience: 1, c4_merits: 1, c5_skills: 1, c6_salary: 1500000, status: "Unverified" },
+        { email: "a4@test.com", name: "A4", category: "Final Year", c1_gpa: 3.88, c2_portfolio: 1, c3_experience: 1, c4_merits: 1, c5_skills: 1, c6_salary: 2500000, status: "Unverified" },
+        { email: "a5@test.com", name: "A5", category: "Fresh Graduate", c1_gpa: 3.65, c2_portfolio: 1, c3_experience: 1, c4_merits: 1, c5_skills: 1, c6_salary: 1700000, status: "Unverified" },
+        { email: "a6@test.com", name: "A6", category: "Fresh Graduate", c1_gpa: 3.96, c2_portfolio: 1, c3_experience: 1, c4_merits: 1, c5_skills: 1, c6_salary: 3000000, status: "Unverified" },
+        { email: "a7@test.com", name: "A7", category: "Fresh Graduate", c1_gpa: 3.42, c2_portfolio: 1, c3_experience: 1, c4_merits: 1, c5_skills: 1, c6_salary: 1400000, status: "Unverified" },
+        { email: "a8@test.com", name: "A8", category: "Fresh Graduate", c1_gpa: 3.75, c2_portfolio: 1, c3_experience: 1, c4_merits: 1, c5_skills: 1, c6_salary: 1600000, status: "Unverified" },
+        { email: "a9@test.com", name: "A9", category: "Final Year", c1_gpa: 3.85, c2_portfolio: 1, c3_experience: 1, c4_merits: 1, c5_skills: 1, c6_salary: 2200000, status: "Unverified" },
+        { email: "maylinthelaw@gmail.com", name: "A10", category: "Final Year", c1_gpa: 3.5, c2_portfolio: 1, c3_experience: 1, c4_merits: 1, c5_skills: 1, c6_salary: 1300000, status: "Unverified" }
       ];
 
       const insertApplicantQuery = `
@@ -85,11 +85,13 @@ const initDatabase = async () => {
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
       `;
 
+      const defaultInterview = { isPassed: false, status: "Locked", date: "", time: "", link: "", rescheduleRequest: null };
+
       for (const app of defaultApplicants) {
         await client.query(insertApplicantQuery, [
           app.email, app.name, app.category, app.c1_gpa, app.c2_portfolio, app.c3_experience,
           app.c4_merits, app.c5_skills, app.c6_salary, '', 'Curriculum_Vitae.pdf', 'Transkrip_Nilai_Terakhir.pdf',
-          JSON.stringify([]), JSON.stringify([]), JSON.stringify([]), app.status, JSON.stringify(app.interviewDetails)
+          JSON.stringify([]), JSON.stringify([]), JSON.stringify([]), app.status, JSON.stringify(defaultInterview)
         ]);
       }
       console.log('✅ Semua data pelamar A1 - A10 sukses dimasukkan ke PostgreSQL!');
