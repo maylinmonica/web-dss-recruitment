@@ -2,14 +2,13 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
-const { initDatabase } = require('./db'); // Impor koneksi PostgreSQL
 
-// Memuat variabel lingkungan dari file .env
 dotenv.config();
+
+const { initDatabase } = require('./db'); 
 
 const app = express();
 
-// Jalankan pembuatan tabel otomatis saat server booting pertama kali
 initDatabase();
 
 // Konfigurasi Middleware Global
