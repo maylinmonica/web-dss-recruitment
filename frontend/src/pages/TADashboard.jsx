@@ -25,7 +25,7 @@ function TADashboard() {
   const fetchApplicants = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('${API_BASE_URL}/api/applicants', {
+      const response = await axios.get(`${API_BASE_URL}/api/applicants`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.data.status === 'Success') {
