@@ -137,7 +137,7 @@ function ManagerDashboard() {
           <main className="main-workspace-container flex-1 p-6 sm:p-10 space-y-8 relative z-10 animate-in fade-in duration-150">
             <div className="space-y-1">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-100 uppercase tracking-wide">Panel Manajer Pembuat Keputusan</div>
-              <h2 className="text-2xl sm:text-3xl font-bold font-display text-slate-950 tracking-tight">Dashboard Perankingan TOPSIS</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold font-display text-slate-950 tracking-tight">Dashboard Perankingan Rekomendasi</h2>
               <p className="text-slate-500 text-xs sm:text-sm">Pantau hasil rekomendasi otomatisasi peringkat pelamar magang berdasarkan bobot kriteria aktif.</p>
             </div>
 
@@ -145,9 +145,9 @@ function ManagerDashboard() {
             <div className="flex items-center gap-2.5">
               <Filter className="w-4 h-4 text-slate-400" />
               <div className="inline-flex bg-white border border-slate-200 rounded-full p-1 shadow-sm">
-               <button onClick={() => setCategory('All')} className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wide transition-all ${category === 'All' ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Semua Kategori</button>
-              <button onClick={() => setCategory('Final Year')} className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wide transition-all ${category === 'Final Year' ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Mahasiswa Tingkat Akhir</button>
-              <button onClick={() => setCategory('Fresh Graduate')} className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wide transition-all ${category === 'Fresh Graduate' ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Lulusan Baru</button>
+                <button onClick={() => setCategory('All')} className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wide transition-all ${category === 'All' ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Semua Kategori</button>
+                <button onClick={() => setCategory('Final Year')} className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wide transition-all ${category === 'Final Year' ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Mahasiswa Tingkat Akhir</button>
+                <button onClick={() => setCategory('Fresh Graduate')} className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wide transition-all ${category === 'Fresh Graduate' ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Lulusan Baru</button>
               </div>
               <button onClick={() => fetchRanking(category)} className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:border-sky-400 rounded-full text-[11px] font-bold text-slate-500 hover:text-sky-600 transition-all shadow-sm"><RefreshCw className="w-3.5 h-3.5" /> Segarkan Halaman</button>
             </div>
@@ -155,7 +155,7 @@ function ManagerDashboard() {
             {/* GRAFIK PREFERENSI */}
             <div className="bg-white rounded-3xl border border-slate-200/60 shadow-[0_12px_40px_rgba(15,23,42,0.02)] overflow-hidden">
               <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                <div className="flex items-center gap-2.5"><TrendingUp className="w-4 h-4 text-sky-500" /><h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">Visualisasi Nilai Preferensi Kelayakan</h3></div>
+                <div className="flex items-center gap-2.5"><TrendingUp className="w-4 h-4 text-sky-500" /><h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">Visualisasi Nilai Kelayakan Kelompok</h3></div>
                 <span className="px-2.5 py-1 text-[10px] font-mono font-bold bg-sky-50 border border-sky-100 rounded-md text-sky-700">{ranking.length} Kandidat Terdaftar</span>
               </div>
               <div className="p-6 space-y-3">
@@ -181,16 +181,17 @@ function ManagerDashboard() {
 
             {/* TABEL URUTAN REKOMENDASI KANDIDAT */}
             <div className="bg-white rounded-3xl border border-slate-200/60 shadow-[0_12px_40px_rgba(15,23,42,0.02)] overflow-hidden">
-              <div className="px-6 py-5 border-b border-slate-100 flex items-center gap-2.5 bg-slate-50/50"><Award className="w-4 h-4 text-sky-500" /><h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">Tabel Urutan Rekomendasi Seleksi</h3></div>
+              <div className="px-6 py-5 border-b border-slate-100 flex items-center gap-2.5 bg-slate-50/50"><Award className="w-4 h-4 text-sky-500" /><h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">Tabel Urutan Urgensi Hasil Seleksi</h3></div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-slate-100 bg-slate-50/30 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                       <th className="px-6 py-4">Peringkat</th>
                       <th className="px-6 py-4">Nama Kandidat</th>
-                      <th className="px-6 py-4">Jarak Ideal (D+)</th>
-                      <th className="px-6 py-4">Jarak Ideal (D-)</th>
-                      <th className="px-6 py-4">Nilai Preferensi (V)</th>
+                      <th className="px-6 py-4">Jarak Batas Atas</th>
+                      <th className="px-6 py-4">Jarak Batas Bawah</th>
+                      <th className="px-6 py-4">Nilai Kecocokan</th>
+                      <th className="px-6 py-4">Status Keputusan</th> {/* PERBAIKAN KOSTUMISASI KOLOM BARU */}
                       <th className="px-6 py-4 text-right">Aksi Peninjauan</th>
                     </tr>
                   </thead>
@@ -201,14 +202,39 @@ function ManagerDashboard() {
                         <td className="px-6 py-4">
                           <div className="font-semibold text-slate-900 text-sm">{r.name}</div>
                           {r.interviewDetails?.rescheduleRequest?.requested && (
-                            <div className="mt-1.5 p-2 bg-amber-50 border border-amber-200 text-amber-950 rounded-xl text-[10px] inline-flex items-center gap-1.5 max-w-sm animate-pulse"><AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" /><span>Mengajukan Reschedule Sesi</span></div>
+                            <div className="mt-1.5 p-2 bg-amber-50 border border-amber-200 text-amber-950 rounded-xl text-[10px] inline-flex items-center gap-1.5 max-w-sm animate-pulse"><AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" /><span>Mengajukan Perubahan Jadwal Sesi</span></div>
                           )}
                         </td>
                         <td className="px-6 py-4 font-mono text-xs text-slate-500">{r.d_plus}</td>
                         <td className="px-6 py-4 font-mono text-xs text-slate-500">{r.d_minus}</td>
                         <td className="px-6 py-4 font-mono text-xs font-bold text-slate-900">{r.preference}</td>
+                        
+                        {/* PERBAIKAN: MENAMPILKAN BADGE STATUS KEPUTUSAN KANDIDAT SECARA SCANNABLE */}
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                            r.interviewDetails?.status === 'Scheduled' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                            r.interviewDetails?.status === 'Rejected' ? 'bg-rose-50 text-rose-700 border-rose-100' :
+                            'bg-amber-50 text-amber-700 border-amber-100 animate-pulse'
+                          }`}>
+                            {r.interviewDetails?.status === 'Scheduled' ? 'Disetujui Wawancara' :
+                             r.interviewDetails?.status === 'Rejected' ? 'Berkas Ditolak' : 'Menunggu Keputusan'}
+                          </span>
+                        </td>
+
                         <td className="px-6 py-4 text-right">
-                          <button onClick={() => handleFetchApplicantDetail(r.id)} disabled={detailLoading} className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded-full text-[11px] font-bold uppercase tracking-wider transition-all shadow-sm">Tinjau Berkas <ArrowRight className="w-3 h-3" /></button>
+                          {/* PERBAIKAN UX: Merubah gaya tombol secara dinamis berdasarkan status riwayat periksa */}
+                          <button 
+                            onClick={() => handleFetchApplicantDetail(r.id)} 
+                            disabled={detailLoading} 
+                            className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all shadow-sm ${
+                              r.interviewDetails?.status && r.interviewDetails.status !== 'Locked'
+                                ? 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-800'
+                                : 'bg-sky-600 text-white hover:bg-sky-700'
+                            }`}
+                          >
+                            {r.interviewDetails?.status && r.interviewDetails.status !== 'Locked' ? 'Tinjau Ulang' : 'Evaluasi Berkas'}
+                            <ArrowRight className="w-3 h-3" />
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -286,12 +312,16 @@ function ManagerDashboard() {
                     {selectedApplicant.interviewDetails?.status === 'Scheduled' ? (
                       <div className="space-y-2">
                         <div className="p-3 bg-emerald-50 border border-emerald-100 text-emerald-800 rounded-xl text-xs text-center font-semibold">Kandidat ini telah disetujui untuk tahap wawancara.</div>
-                       {selectedApplicant.interviewDetails?.rescheduleRequest?.requested && (
-                          <button onClick={() => setScheduleModal({ id: selectedApplicant.id, name: selectedApplicant.name })} className="w-full py-2.5 bg-sky-600 hover:bg-sky-700 text-white rounded-full text-xs font-bold uppercase tracking-wider transition-colors">Sesuaikan Ulang Jadwal</button>
-                        )}
+                        <div className="grid grid-cols-2 gap-2">
+                          <button onClick={() => handleDecision(selectedApplicant.id, 'Rejected')} className="w-full py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-100 rounded-full text-xs font-bold uppercase tracking-wide transition-colors">Ubah Jadi Tolak</button>
+                          <button onClick={() => setScheduleModal({ id: selectedApplicant.id, name: selectedApplicant.name })} className="w-full py-2.5 bg-sky-600 hover:bg-sky-700 text-white rounded-full text-xs font-bold uppercase tracking-wider transition-colors">Sesuaikan Jadwal</button>
+                        </div>
                       </div>
                     ) : selectedApplicant.interviewDetails?.status === 'Rejected' ? (
-                      <div className="p-3 bg-rose-50 border border-rose-100 text-rose-800 rounded-xl text-xs text-center font-semibold">Kandidat ini telah ditandai Tidak Lolos berkas administrasi.</div>
+                      <div className="space-y-2">
+                        <div className="p-3 bg-rose-50 border border-rose-100 text-rose-800 rounded-xl text-xs text-center font-semibold">Kandidat ini telah ditandai Tidak Lolos berkas administrasi.</div>
+                        <button onClick={() => setScheduleModal({ id: selectedApplicant.id, name: selectedApplicant.name })} className="w-full py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-100 rounded-full text-xs font-bold uppercase tracking-wide transition-colors">Ubah Jadi Setujui</button>
+                      </div>
                     ) : (
                       <div className="grid grid-cols-2 gap-2.5">
                         <button onClick={() => handleDecision(selectedApplicant.id, 'Rejected')} disabled={decisionLoading === selectedApplicant.id} className="w-full py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-100 rounded-full text-xs font-bold uppercase tracking-wide transition-colors">Tolak Kandidat</button>
