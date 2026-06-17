@@ -108,7 +108,7 @@ function CriteriaPage() {
 
           <div className="bg-white rounded-3xl border border-slate-200/60 shadow-[0_12px_40px_rgba(15,23,42,0.02)] p-6 space-y-6">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center gap-2"><Sliders className="w-4 h-4 text-slate-400" /> Parameter Matriks TOPSIS</h3>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center gap-2"><Sliders className="w-4 h-4 text-slate-400" /> Parameter Matriks Perangkingan</h3>
               <span className={`px-3 py-1 text-xs font-mono font-bold rounded-xl border ${Math.abs(totalPercent - 100) < 0.01 ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'}`}>Total Input: {totalPercent.toFixed(0)}% / 100%</span>
             </div>
 
@@ -116,7 +116,7 @@ function CriteriaPage() {
               {Object.keys(CRITERIA_LABELS).map((key) => (
                 <div key={key} className="p-4 bg-slate-50/60 border border-slate-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="space-y-0.5">
-                    <span className="text-[10px] font-mono uppercase text-slate-400 font-bold">{key.toUpperCase()}</span>
+                    {/* PERBAIKAN: Kode teknis mentah C1, C2, dll. sudah dihilangkan sepenuhnya */}
                     <h4 className="text-sm font-semibold text-slate-900">{CRITERIA_LABELS[key]}</h4>
                   </div>
                   <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto justify-between sm:justify-end">
@@ -125,8 +125,8 @@ function CriteriaPage() {
                       <span className="text-xs text-slate-400 font-semibold">%</span>
                     </div>
                     <select value={editAttributes[key] ?? 'benefit'} onChange={(e) => setEditAttributes(a => ({ ...a, [key]: e.target.value }))} className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-sky-500">
-                      <option value="benefit">Benefit (Nilai tinggi menguntungkan)</option>
-                      <option value="cost">Cost (Nilai rendah menguntungkan)</option>
+                      <option value="benefit">Benefit (Kualifikasi tinggi menguntungkan)</option>
+                      <option value="cost">Cost (Kompensasi rendah menguntungkan)</option>
                     </select>
                   </div>
                 </div>
@@ -134,8 +134,9 @@ function CriteriaPage() {
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-100 bg-white">
-              <div className="flex items-center gap-2 text-slate-400 text-xs"><Info className="w-4 h-4 text-slate-400 shrink-0" /><span>Tombol simpan akan aktif jika akumulasi nilai seluruh input kriteria tepat bernilai 100%.</span></div>
-              <button onClick={handleSaveCriteria} disabled={savingConfig || Math.abs(totalPercent - 100) > 0.01} className="w-full sm:w-auto px-5 py-2.5 bg-slate-950 hover:bg-sky-600 disabled:bg-slate-300 text-white rounded-full text-xs font-bold uppercase tracking-wide transition-all shadow-sm">{savingConfig ? 'Menyimpan...' : 'Simpan Perubahan'}</button>
+              <div className="flex items-center gap-2 text-slate-400 text-xs"><Info className="w-4 h-4 text-slate-400 shrink-0" /><span>Tombol simpan akan aktif jika alokasi nilai seluruh kriteria tepat bernilai 100%.</span></div>
+              {/* PERBAIKAN: Tombol simpan diubah dari Hitam Pekat menjadi Biru Brand Premium */}
+              <button onClick={handleSaveCriteria} disabled={savingConfig || Math.abs(totalPercent - 100) > 0.01} className="w-full sm:w-auto px-5 py-2.5 bg-sky-600 hover:bg-sky-700 disabled:bg-slate-300 text-white rounded-full text-xs font-bold uppercase tracking-wide transition-all shadow-sm">{savingConfig ? 'Menyimpan...' : 'Simpan Perubahan'}</button>
             </div>
           </div>
         </main>
