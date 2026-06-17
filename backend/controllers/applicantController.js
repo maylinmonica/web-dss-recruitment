@@ -1,4 +1,30 @@
-const { readApplicants, saveApplicants, readCriteria } = require('../dataStore');
+const { pool } = require('../db');
+const { readCriteria } = require('../dataStore'); // Kriteria bobot tetap aman di json
+
+// HELPER MAPPER: Mengubah baris snake_case PostgreSQL menjadi camelCase standarisasi Frontend & TOPSIS
+const mapRowToApplicant = (row) => {
+    if (!row) return null;
+    return {
+        id: row.id.toString(),
+        email: row.email,
+        name: row.name,
+        category: row.category,
+        c1_gpa: parseFloat(row.c1_gpa),
+        c2_portfolio: row.c2_portfolio,
+        c3_experience: row.c3_experience,
+        c4_merits: row.c4_merits,
+        c5_skills: row.c5_skills,
+        c6_salary: row.c6_salary,
+        portfolioUrl: row.portfolio_url || '',
+        cvName: row.cv_name,
+        transcriptName: row.transcript_name,
+        certs: typeof row.certs === 'string' ? JSON.parse(row.certs) : row.certs || [],
+        awards: typeof row.awards === 'string' ? JSON.parse(row.awards) : row.awards || [],
+        skillsList: typeof row.skills_list === 'string' ? JSON.parse(row.skills_list) : row.skills_list || [],
+        status: row.status,
+        interviewDetails: typeof row.interview_details === 'string' ? JSON.parse(row.interview_details) : row.interview_details
+    };
+};
 
 // 1. ENDPOINT: Mengirimkan Formulir Lamaran Baru (Pelamar)
 exports.submitApplication = async (req, res) => {
@@ -38,14 +64,13 @@ exports.submitApplication = async (req, res) => {
             });
         }
 
-    const allApplicants = readApplicants() || [];
-        const hasApplied = allApplicants.find(app => app.email && app.email.toLowerCase() === emailPelamar.toLowerCase());
-
-        if (hasApplied) {
+        // SQL: Cek data pendaftaran duplikat
+        const checkResult = await pool.query('SELECT * FROM applicants WHERE LOWER(email) = LOWER($1)', [emailPelamar]);
+        if (checkResult.rows.length > 0) {
             return res.status(400).json({
                 status: "Fail",
                 ui_notice: { title: "Pendaftaran Ditolak", description: "Email Anda sudah tercatat mengirimkan berkas lamaran sebelumnya.", type: "error" }
-              });
+            });
         }
 
         let cvName = 'Curriculum_Vitae.pdf';
@@ -64,36 +89,36 @@ exports.submitApplication = async (req, res) => {
         if (req.body.awards) { try { parsedAwards = JSON.parse(req.body.awards); } catch (e) { parsedAwards = []; } }
         if (req.body.skillsList) { try { parsedSkillsList = JSON.parse(req.body.skillsList); } catch (e) { parsedSkillsList = []; } }
 
-        const newApplicant = {
-            id: (allApplicants.length + 1).toString(),
-            email: emailPelamar.toLowerCase(),
-            name,
-            category,
-            c1_gpa: parsedGpa,
-            c2_portfolio: portfolioUrl ? 4 : 1, 
-            c3_experience: 1, 
-            c4_merits: parsedAwards.length > 0 ? Math.min(parsedAwards.length + 1, 5) : 1, 
-            c5_skills: parsedCerts.length > 0 ? Math.min(parsedCerts.length + 1, 5) : 1, 
-            c6_salary: parsedSalary,
-            portfolioUrl: portfolioUrl || '',
-            cvName: cvName,
-            transcriptName: transcriptName,
-            certs: parsedCerts,
-            awards: parsedAwards,
-            skillsList: parsedSkillsList, 
-            status: "Unverified",
-            interviewDetails: {
-                isPassed: false,        
-                status: "Locked",       
-                date: "",               
-                time: "",              
-                link: "",
-                rescheduleRequest: null
-            }
+        const defaultInterview = {
+            isPassed: false,        
+            status: "Locked",       
+            date: "",               
+            time: "",              
+            link: "",
+            rescheduleRequest: null
         };
 
-        allApplicants.push(newApplicant);
-        saveApplicants(allApplicants);
+        // SQL: Simpan formulir baru ke database PostgreSQL
+        const insertQuery = `
+            INSERT INTO applicants (
+                email, name, category, c1_gpa, c2_portfolio, c3_experience, c4_merits, c5_skills, c6_salary,
+                portfolio_url, cv_name, transcript_name, certs, awards, skills_list, status, interview_details
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+            RETURNING *
+        `;
+
+        const values = [
+            emailPelamar.toLowerCase(), name, category, parsedGpa,
+            portfolioUrl ? 4 : 1, 1, 
+            parsedAwards.length > 0 ? Math.min(parsedAwards.length + 1, 5) : 1,
+            parsedCerts.length > 0 ? Math.min(parsedCerts.length + 1, 5) : 1, 
+            parsedSalary, portfolioUrl || '', cvName, transcriptName,
+            JSON.stringify(parsedCerts), JSON.stringify(parsedAwards), JSON.stringify(parsedSkillsList),
+            "Unverified", JSON.stringify(defaultInterview)
+        ];
+
+        const result = await pool.query(insertQuery, values);
+        const newApplicant = mapRowToApplicant(result.rows[0]);
 
         return res.status(201).json({
             status: "Success",
@@ -108,42 +133,22 @@ exports.submitApplication = async (req, res) => {
 // 2. ENDPOINT: Input Skor Rubrik Kualitatif 1-5 (Talent Acquisition)
 exports.verifyApplicantScores = async (req, res) => {
     const { id } = req.params;
-    const { c2_portfolio, c3_experience, c4_merits, c5_skills } = req.body;
-
-    const scores = { c2_portfolio, c3_experience, c4_merits, c5_skills };
-    for (const [key, value] of Object.entries(scores)) {
-        if (value === undefined) {
-            return res.status(400).json({
-                status: "Fail",
-                ui_notice: { title: "Formulir Nilai Tidak Lengkap", description: "Seluruh kriteria penilaian kualitatif wajib ditentukan.", type: "warning" }
-            });
-        }
-        const parsed = parseInt(value, 10);
-        if (isNaN(parsed) || parsed < 1 || parsed > 5) {
-            return res.status(400).json({
-                status: "Fail",
-                ui_notice: { title: "Skor Di Luar Batas", description: `Nilai kriteria ${key} harus berada pada rentang skala bulat 1 sampai 5.`, type: "warning" }
-            });
-        }
-    }
+    const { c2_portfolio, c3_experience, c4_merits } = req.body;
 
     try {
-        let allApplicants = readApplicants();
-        const idx = allApplicants.findIndex(app => app.id === id);
+        const result = await pool.query(
+            `UPDATE applicants SET c2_portfolio = $1, c3_experience = $2, c4_merits = $3, status = 'Verified' WHERE id = $4 RETURNING *`,
+            [parseInt(c2_portfolio, 10), parseInt(c3_experience, 10), parseInt(c4_merits, 10), id]
+        );
 
-        if (idx === -1) {
+        if (result.rows.length === 0) {
             return res.status(404).json({ status: "Fail", ui_notice: { title: "Tidak Ditemukan", description: "Profil kandidat pelamar tidak valid.", type: "error" } });
         }
 
-        allApplicants[idx].c2_portfolio = parseInt(c2_portfolio, 10);
-        allApplicants[idx].c3_experience = parseInt(c3_experience, 10);
-        allApplicants[idx].c4_merits = parseInt(c4_merits, 10);
-        allApplicants[idx].status = "Verified";
-
-        saveApplicants(allApplicants);
+        const updated = mapRowToApplicant(result.rows[0]);
         return res.status(200).json({
             status: "Success",
-            ui_notice: { title: "Verifikasi Berhasil", description: `Evaluasi dokumen berkas ${allApplicants[idx].name} telah disimpan untuk perangkingan.`, type: "success" }
+            ui_notice: { title: "Verifikasi Berhasil", description: `Evaluasi dokumen berkas ${updated.name} telah disimpan untuk perangkingan.`, type: "success" }
         });
     } catch (error) {
         return res.status(500).json({ status: "Error", message: error.message });
@@ -155,29 +160,8 @@ exports.setInterviewDecision = async (req, res) => {
     const { id } = req.params;
     const { decision, date, time, link } = req.body; 
 
-    if (!decision || !['Approved', 'Rejected'].includes(decision)) {
-        return res.status(400).json({
-            status: "Fail",
-            ui_notice: { title: "Keputusan Tidak Valid", description: "Status keputusan akhir harus berupa Approved atau Rejected.", type: "warning" }
-        });
-    }
-
-    if (decision === 'Approved' && (!date || !time)) {
-        return res.status(400).json({
-            status: "Fail",
-            ui_notice: { title: "Jadwal Belum Lengkap", description: "Tanggal dan waktu interview wajib ditentukan untuk kandidat yang disetujui.", type: "warning" }
-        });
-    }
-
     try {
-        let allApplicants = readApplicants();
-        const idx = allApplicants.findIndex(app => app.id === id);
-
-        if (idx === -1) {
-            return res.status(404).json({ status: "Fail", ui_notice: { title: "Tidak Ditemukan", description: "Profil kandidat pelamar tidak valid.", type: "error" } });
-        }
-
-        allApplicants[idx].interviewDetails = {
+        const updatedDetails = {
             isPassed: decision === 'Approved',
             status: decision === 'Approved' ? "Scheduled" : "Rejected",
             date: date || "",
@@ -186,16 +170,24 @@ exports.setInterviewDecision = async (req, res) => {
             rescheduleRequest: null 
         };
 
-        saveApplicants(allApplicants);
+        const result = await pool.query(
+            `UPDATE applicants SET interview_details = $1 WHERE id = $2 RETURNING *`,
+            [JSON.stringify(updatedDetails), id]
+        );
 
+        if (result.rows.length === 0) {
+            return res.status(404).json({ status: "Fail", ui_notice: { title: "Tidak Ditemukan", description: "Profil kandidat pelamar tidak valid.", type: "error" } });
+        }
+
+        const updated = mapRowToApplicant(result.rows[0]);
         return res.status(200).json({
             status: "Success",
             ui_notice: {
                 title: decision === 'Approved' ? "Kandidat Disetujui" : "Kandidat Ditandai Tidak Lolos",
-                description: decision === 'Approved' ? `Jadwal wawancara resmi untuk ${allApplicants[idx].name} berhasil diterbitkan.` : `Profil ${allApplicants[idx].name} ditandai tidak dilanjutkan ke tahap wawancara.`,
+                description: decision === 'Approved' ? `Jadwal wawancara resmi untuk ${updated.name} berhasil diterbitkan.` : `Profil ${updated.name} ditandai tidak dilanjutkan ke tahap wawancara.`,
                 type: decision === 'Approved' ? "success" : "warning"
             },
-            data: allApplicants[idx]
+            data: updated
         });
     } catch (error) {
         return res.status(500).json({ status: "Error", message: error.message });
@@ -207,35 +199,21 @@ exports.requestReschedule = async (req, res) => {
     const emailPelamar = req.user?.email || "";
     const { reason } = req.body;
 
-    if (!reason || !reason.trim()) {
-        return res.status(400).json({
-            status: "Fail",
-            ui_notice: { title: "Alasan Kosong", description: "Alasan pengajuan perubahan jadwal wawancara wajib diisi.", type: "warning" }
-        });
-    }
-
     try {
-        let allApplicants = readApplicants();
-        const idx = allApplicants.findIndex(app => app.email && app.email.toLowerCase() === emailPelamar.toLowerCase());
-
-        if (idx === -1) {
-            return res.status(404).json({ 
-                status: "Fail", 
-                ui_notice: { title: "Data Tidak Ditemukan", description: "Profil pendaftaran lamaran Anda tidak ditemukan.", type: "error" } 
-            });
+        const checkResult = await pool.query('SELECT * FROM applicants WHERE LOWER(email) = LOWER($1)', [emailPelamar]);
+        if (checkResult.rows.length === 0) {
+            return res.status(404).json({ status: "Fail", ui_notice: { title: "Data Tidak Ditemukan", description: "Profil pendaftaran lamaran Anda tidak ditemukan.", type: "error" } });
         }
 
-        if (!allApplicants[idx].interviewDetails) {
-            allApplicants[idx].interviewDetails = { isPassed: false, status: "Locked", date: "", time: "", link: "" };
-        }
-
-        allApplicants[idx].interviewDetails.rescheduleRequest = {
+        const applicant = mapRowToApplicant(checkResult.rows[0]);
+        const currentDetails = applicant.interviewDetails || {};
+        currentDetails.rescheduleRequest = {
             requested: true,
             reason: reason.trim(),
             status: "Pending"
         };
 
-        saveApplicants(allApplicants);
+        await pool.query('UPDATE applicants SET interview_details = $1 WHERE LOWER(email) = LOWER($2)', [JSON.stringify(currentDetails), emailPelamar.toLowerCase()]);
 
         return res.status(200).json({
             status: "Success",
@@ -250,44 +228,39 @@ exports.requestReschedule = async (req, res) => {
 exports.getPerankingan = async (req, res) => {
     const { category } = req.query;
 
-    if (!category) {
-        return res.status(400).json({
-            status: "Fail",
-            ui_notice: { title: "Kategori Kosong", description: "Parameter kategori lowongan dibutuhkan.", type: "warning" }
-        });
-    }
-
-    const allApplicants = readApplicants();
-    const candidates = allApplicants
-        .filter(app => app.category === category && app.status === "Verified")
-        .map(app => ({
-            ...app,
-            c1_gpa:       parseFloat(app.c1_gpa)       || 0,
-            c2_portfolio:  parseFloat(app.c2_portfolio)  || 0,
-            c3_experience: parseFloat(app.c3_experience) || 0,
-            c4_merits:     parseFloat(app.c4_merits)     || 0,
-            c5_skills:     parseFloat(app.c5_skills)     || 0,
-            c6_salary:     parseFloat(app.c6_salary)     || 0,
-        }));
-
-    if (candidates.length === 0) {
-        return res.status(200).json({ status: "Success", category, ranking: [] });
-    }
-
-    if (candidates.length === 1) {
-        const single = candidates[0];
-        return res.status(200).json({
-            status: "Success",
-            category,
-            ranking: [{ id: single.id, name: single.name, d_plus: "0.0000", d_minus: "0.0000", preference: "1.0000", interviewDetails: single.interviewDetails || { status: "Locked" } }]
-        });
-    }
-
-    const criteriaConfig = readCriteria();
-    const W   = criteriaConfig.weights;
-    const attr = criteriaConfig.attributes;
-
     try {
+        const dbResult = await pool.query('SELECT * FROM applicants');
+        const allApplicants = dbResult.rows.map(mapRowToApplicant);
+        
+        const candidates = allApplicants
+            .filter(app => app.status === "Verified" && (category === 'All' || app.category === category))
+            .map(app => ({
+                ...app,
+                c1_gpa:       parseFloat(app.c1_gpa)       || 0,
+                c2_portfolio:  parseFloat(app.c2_portfolio)  || 0,
+                c3_experience: parseFloat(app.c3_experience) || 0,
+                c4_merits:     parseFloat(app.c4_merits)     || 0,
+                c5_skills:     parseFloat(app.c5_skills)     || 0,
+                c6_salary:     parseFloat(app.c6_salary)     || 0,
+            }));
+
+        if (candidates.length === 0) {
+            return res.status(200).json({ status: "Success", category, ranking: [] });
+        }
+
+        if (candidates.length === 1) {
+            const single = candidates[0];
+            return res.status(200).json({
+                status: "Success",
+                category,
+                ranking: [{ id: single.id, name: single.name, d_plus: "0.0000", d_minus: "0.0000", preference: "1.0000", interviewDetails: single.interviewDetails || { status: "Locked" } }]
+            });
+        }
+
+        const criteriaConfig = readCriteria();
+        const W   = criteriaConfig.weights;
+        const attr = criteriaConfig.attributes;
+
         const fields = ['c1_gpa', 'c2_portfolio', 'c3_experience', 'c4_merits', 'c5_skills', 'c6_salary'];
         const keys   = ['c1',     'c2',            'c3',            'c4',        'c5',        'c6'];
 
@@ -348,154 +321,18 @@ exports.getPerankingan = async (req, res) => {
             };
         });
         
-        return res.status(200).json({
-            status: "Success",
-            ui_notice: { title: "Analisis Berhasil", description: `Peringkat rekomendasi kelompok ${category} sukses diperbarui.`, type: "success" },
-            category,
-            ranking: rankingResults
-        });
-    } catch (error) {
-        return res.status(500).json({ status: "Error", ui_notice: { title: "Error Komputasi", description: error.message, type: "error" } });
-    }
-};// 5. ENGINE KOMPUTASI MATRIKS TOPSIS — PEMBARUAN DATA AUDIT TRANSPARANSI
-
-// 5. ENGINE KOMPUTASI MATRIKS TOPSIS — GABUNGAN & AUDIT TRANSPARANSI RUMUS
-exports.getPerankingan = async (req, res) => {
-    const { category } = req.query;
-
-    if (!category) {
-        return res.status(400).json({
-            status: "Fail",
-            ui_notice: { title: "Kategori Kosong", description: "Parameter kategori lowongan dibutuhkan.", type: "warning" }
-        });
-    }
-
-    const allApplicants = readApplicants();
-    
-    // PERBAIKAN 1: Mendukung peringkat gabungan jika parameter bernilai 'All'
-    const candidates = allApplicants
-        .filter(app => app.status === "Verified" && (category === 'All' || app.category === category))
-        .map(app => ({
-            ...app,
-            c1_gpa:       parseFloat(app.c1_gpa)       || 0,
-            c2_portfolio:  parseFloat(app.c2_portfolio)  || 0,
-            c3_experience: parseFloat(app.c3_experience) || 0,
-            c4_merits:     parseFloat(app.c4_merits)     || 0,
-            c5_skills:     parseFloat(app.c5_skills)     || 0,
-            c6_salary:     parseFloat(app.c6_salary)     || 0,
-        }));
-
-    if (candidates.length === 0) {
-        return res.status(200).json({ status: "Success", category, ranking: [] });
-    }
-
-    if (candidates.length === 1) {
-        const single = candidates[0];
-        return res.status(200).json({
-            status: "Success",
-            category,
-            ranking: [{ id: single.id, name: single.name, d_plus: "0.0000", d_minus: "0.0000", preference: "1.0000", interviewDetails: single.interviewDetails || { status: "Locked" } }]
-        });
-    }
-
-    const criteriaConfig = readCriteria();
-    const W   = criteriaConfig.weights;
-    const attr = criteriaConfig.attributes;
-
-    try {
-        const fields = ['c1_gpa', 'c2_portfolio', 'c3_experience', 'c4_merits', 'c5_skills', 'c6_salary'];
-        const keys   = ['c1',     'c2',            'c3',            'c4',        'c5',        'c6'];
-
-        const divisor = {};
-        keys.forEach((k, i) => {
-            const sumSq = candidates.reduce((sum, c) => sum + Math.pow(c[fields[i]], 2), 0);
-            divisor[k] = Math.sqrt(sumSq) || 1;
-        });
-
-        const matrixY = candidates.map(c => ({
-            id:   c.id,
-            name: c.name,
-            y1: (c.c1_gpa       / divisor.c1) * parseFloat(W.c1),
-            y2: (c.c2_portfolio  / divisor.c2) * parseFloat(W.c2),
-            y3: (c.c3_experience / divisor.c3) * parseFloat(W.c3),
-            y4: (c.c4_merits     / divisor.c4) * parseFloat(W.c4),
-            y5: (c.c5_skills     / divisor.c5) * parseFloat(W.c5),
-            y6: (c.c6_salary     / divisor.c6) * parseFloat(W.c6),
-        }));
-
-        const getIdealPair = (colVals, attribute) => {
-            const maxVal = Math.max(...colVals);
-            const minVal = Math.min(...colVals);
-            if (attribute === 'benefit') return { pos: maxVal, neg: minVal };
-            return { pos: minVal, neg: maxVal };
-        };
-
-        const colMap = [
-            { col: 'y1', attr: attr.c1 }, { col: 'y2', attr: attr.c2 }, { col: 'y3', attr: attr.c3 },
-            { col: 'y4', attr: attr.c4 }, { col: 'y5', attr: attr.c5 }, { col: 'y6', attr: attr.c6 },
-        ];
-
-        const ideals = colMap.map(({ col, attr: a }) => {
-            const vals = matrixY.map(r => r[col]);
-            return getIdealPair(vals, a);
-        });
-
-        const withDistance = matrixY.map(row => {
-            const cols = ['y1', 'y2', 'y3', 'y4', 'y5', 'y6'];
-            const d_plus = Math.sqrt(cols.reduce((sum, col, i) => sum + Math.pow(row[col] - ideals[i].pos, 2), 0));
-            const d_minus = Math.sqrt(cols.reduce((sum, col, i) => sum + Math.pow(row[col] - ideals[i].neg, 2), 0));
-            const preference_num = (d_plus + d_minus) === 0 ? 0 : d_minus / (d_plus + d_minus);
-
-            return { id: row.id, name: row.name, d_plus_num: d_plus, d_minus_num: d_minus, preference_num };
-        });
-
-        withDistance.sort((a, b) => b.preference_num - a.preference_num);
-
-        const rankingResults = withDistance.map(row => {
-            const original = candidates.find(c => c.id === row.id);
-            return {
-                id:         row.id,
-                name:       row.name,
-                d_plus:     row.d_plus_num.toFixed(4),
-                d_minus:    row.d_minus_num.toFixed(4),
-                preference: row.preference_num.toFixed(4),
-                interviewDetails: original?.interviewDetails || { status: "Locked" }
-            };
-        });
-        
-        // PERBAIKAN 2: Rekonstruksi data kriteria pendukung untuk portal audit transparansi rumus
-        const criteriaUsed = keys.map((k) => ({
-            key: k,
-            weight: parseFloat(W[k]),
-            attribute: attr[k]
-        }));
-
+        const criteriaUsed = keys.map((k) => ({ key: k, weight: parseFloat(W[k]), attribute: attr[k] }));
         const decisionMatrix = candidates.map(c => ({
             name: c.name,
-            values: {
-                c1: c.c1_gpa,
-                c2: c.c2_portfolio,
-                c3: c.c3_experience,
-                c4: c.c4_merits,
-                c5: c.c5_skills,
-                c6: c.c6_salary,
-            }
+            values: { c1: c.c1_gpa, c2: c.c2_portfolio, c3: c.c3_experience, c4: c.c4_merits, c5: c.c5_skills, c6: c.c6_salary }
         }));
 
         const labelKategori = category === 'All' ? 'Semua Kategori' : category;
 
         return res.status(200).json({
             status: "Success",
-            ui_notice: { 
-                title: "Analisis Berhasil", 
-                description: `Peringkat rekomendasi kelompok ${labelKategori} sukses diperbarui.`, 
-                type: "success" 
-            },
-            category,
-            ideals,            // Dikirimkan ke front-end
-            criteriaUsed,      // Dikirimkan ke front-end
-            decisionMatrix,    // Dikirimkan ke front-end
-            ranking: rankingResults
+            ui_notice: { title: "Analisis Berhasil", description: `Peringkat rekomendasi kelompok ${labelKategori} sukses diperbarui.`, type: "success" },
+            category, ideals, criteriaUsed, decisionMatrix, ranking: rankingResults
         });
     } catch (error) {
         return res.status(500).json({ status: "Error", ui_notice: { title: "Error Komputasi", description: error.message, type: "error" } });
@@ -506,9 +343,17 @@ exports.getPerankingan = async (req, res) => {
 exports.getAllApplicants = async (req, res) => {
     try {
         const { status } = req.query;
-        let allApplicants = readApplicants();
-        if (status) allApplicants = allApplicants.filter(app => app.status === status);
-        return res.status(200).json({ status: "Success", count: allApplicants.length, data: allApplicants });
+        let query = 'SELECT * FROM applicants';
+        let params = [];
+        
+        if (status) {
+            query += ' WHERE status = $1';
+            params.push(status);
+        }
+        
+        const dbResult = await pool.query(query, params);
+        const data = dbResult.rows.map(mapRowToApplicant);
+        return res.status(200).json({ status: "Success", count: data.length, data: data });
     } catch (error) {
         return res.status(500).json({ status: "Error", message: error.message });
     }
@@ -518,8 +363,9 @@ exports.getAllApplicants = async (req, res) => {
 exports.getApplicantById = async (req, res) => {
     const { id } = req.params;
     try {
-        const allApplicants = readApplicants();
-        const applicant = allApplicants.find(app => app.id === id);
+        const dbResult = await pool.query('SELECT * FROM applicants WHERE id = $1', [id]);
+        const applicant = mapRowToApplicant(dbResult.rows[0]);
+        
         if (!applicant) {
             return res.status(404).json({ status: "Fail", ui_notice: { title: "Tidak Ditemukan", description: "Profil pelamar tidak ditemukan.", type: "error" } });
         }
@@ -533,8 +379,8 @@ exports.getApplicantById = async (req, res) => {
 exports.getMyApplication = async (req, res) => {
     const emailPelamar = req.user?.email || "";
     try {
-        const allApplicants = readApplicants();
-        const myApplication = allApplicants.find(app => app.email && app.email.toLowerCase() === emailPelamar.toLowerCase());
+        const dbResult = await pool.query('SELECT * FROM applicants WHERE LOWER(email) = LOWER($1)', [emailPelamar]);
+        const myApplication = mapRowToApplicant(dbResult.rows[0]);
 
         if (!myApplication) {
             return res.status(404).json({ status: "Fail", ui_notice: { title: "Belum Ada Lamaran", description: "Anda belum mengisi formulir pendaftaran.", type: "warning" } });

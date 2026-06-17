@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs'); 
-const { readUsers, saveUsers } = require('../dataStore');
+const { pool } = require('../db'); // Menggunakan koneksi database pg pool
 
 // 1. ENDPOINT: Registrasi Akun Pelamar
 exports.registerApplicant = async (req, res) => {
@@ -17,7 +17,6 @@ exports.registerApplicant = async (req, res) => {
         });
     }
 
-    // PERBAIKAN: Validasi panjang kata sandi minimal 8 karakter di sisi server
     if (password.length < 8) {
         return res.status(400).json({
             status: "Fail",
@@ -30,10 +29,10 @@ exports.registerApplicant = async (req, res) => {
     }
 
     try {
-        const users = readUsers();
-        const userExists = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+        // SQL: Cek apakah email sudah terdaftar di database
+        const userCheck = await pool.query('SELECT * FROM users WHERE LOWER(email) = LOWER($1)', [email]);
 
-        if (userExists) {
+        if (userCheck.rows.length > 0) {
             return res.status(400).json({
                 status: "Fail",
                 ui_notice: {
@@ -47,14 +46,11 @@ exports.registerApplicant = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        const newApplicant = { 
-            email: email.toLowerCase(), 
-            password: hashedPassword, 
-            role: "Applicant" 
-        };
-        
-        users.push(newApplicant);
-        saveUsers(users);
+        // SQL: Simpan data user baru ke dalam tabel 'users'
+        await pool.query(
+            'INSERT INTO users (email, password, role) VALUES ($1, $2, $3)',
+            [email.toLowerCase(), hashedPassword, "Applicant"]
+        );
 
         return res.status(201).json({
             status: "Success",
@@ -73,12 +69,13 @@ exports.registerApplicant = async (req, res) => {
     }
 };
 
-// 2. ENDPOINT: Login Komparasi Hash Password & Produksi Token JWT
+// 2. ENDPOINT: Login Akun
 exports.loginUser = async (req, res) => {
     const { email, password } = req.body;
     try {
-        const users = readUsers();
-        const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+        // SQL: Cari data user berdasarkan email
+        const userResult = await pool.query('SELECT * FROM users WHERE LOWER(email) = LOWER($1)', [email]);
+        const user = userResult.rows[0];
 
         if (!user) {
             return res.status(404).json({ 

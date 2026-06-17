@@ -1,4 +1,6 @@
+const { pool } = require('../db');
 const { readCriteria, saveCriteria } = require('../dataStore');
+
 
 // 1. GET: Mengambil konfigurasi kriteria saat ini
 exports.getCriteria = async (req, res) => {
