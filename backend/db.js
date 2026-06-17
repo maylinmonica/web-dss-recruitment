@@ -1,11 +1,12 @@
 const { Pool } = require('pg');
 
-// Menggunakan koneksi otomatis dari DATABASE_URL milik Railway
+// Deteksi otomatis apakah koneksi menggunakan jalur internal rahasia Railway
+const isInternalConnection = process.env.DATABASE_URL && process.env.DATABASE_URL.includes('railway.internal');
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false // Wajib aktif untuk keperluan hosting cloud
-  }
+  // PERBAIKAN: Jika internal = false (tanpa SSL), jika lokal/publik laptop = pakai SSL
+  ssl: isInternalConnection ? false : { rejectUnauthorized: false }
 });
 
 // Skrip SQL otomatis untuk membangun tabel database rekrutmen
@@ -51,7 +52,8 @@ const initDatabase = async () => {
     console.log('✅ PostgreSQL: Semua tabel siap digunakan!');
     client.release();
   } catch (err) {
-    console.error('❌ PostgreSQL: Gagal menginisialisasi tabel:', err.message);
+    console.error('❌ PostgreSQL: Gagal menginisialisasi tabel:');
+    console.error(err); // Menampilkan objek error utuh agar terbaca detail kendalanya
   }
 };
 
