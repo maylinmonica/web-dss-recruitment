@@ -3,7 +3,8 @@ import axios from 'axios';
 import Sidebar from '../components/Sidebar';
 import { 
   Cpu, Users, FileText, CheckCircle2, Clock, AlertTriangle, 
-  ExternalLink, ClipboardCheck, ArrowRight, ArrowLeft, Terminal, HelpCircle, X
+  ExternalLink, ClipboardCheck, ArrowRight, ArrowLeft, Terminal, HelpCircle, X,
+  Coins // Impor ikon koin untuk representasi finansial/salary
 } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
@@ -94,7 +95,6 @@ function TADashboard() {
         .font-sans { font-family: 'Inter', sans-serif; }
       `}</style>
 
-      {/* PERSISTENT SIDEBAR: Menetap di luar kondisional agar tidak memicu re-render layout */}
       <Sidebar />
 
       <div className="flex-1 flex flex-col relative overflow-y-auto">
@@ -112,7 +112,6 @@ function TADashboard() {
           </div>
         )}
 
-        {/* KONTROL ALUR DISPLAY ANTARMUKA KERJA TA */}
         {!selectedApplicant ? (
           
           // TAMPILAN INDEX: Tabel Antrean Utama Pelamar
@@ -140,7 +139,7 @@ function TADashboard() {
                     <thead>
                       <tr className="border-b border-slate-100 bg-slate-50/30 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                         <th className="px-6 py-4">Informasi Pelamar</th>
-                        <th className="px-6 py-4">Kelompok Posisi</th>
+                        <th className="px-6 py-4">Kelompok Posisi &amp; Kompensasi</th> {/* MODIFIKASI HEADER */}
                         <th className="px-6 py-4">IPK</th>
                         <th className="px-6 py-4">Status Berkas</th>
                         <th className="px-6 py-4 text-right">Aksi Audit</th>
@@ -153,7 +152,11 @@ function TADashboard() {
                             <div className="font-semibold text-slate-900 text-sm">{app.name}</div>
                             <div className="text-xs text-slate-400 mt-0.5">{app.email}</div>
                           </td>
-                          <td className="px-6 py-4 text-xs font-medium text-slate-600">{app.category === 'Final Year' ? 'Mahasiswa Tingkat Akhir' : 'Lulusan Baru'}</td>
+                          <td className="px-6 py-4">
+                            {/* MODIFIKASI: MENAMPILKAN SALARY DI SEBELAH POSISI */}
+                            <div className="text-xs font-medium text-slate-600">{app.category === 'Final Year' ? 'Mahasiswa Tingkat Akhir' : 'Lulusan Baru'}</div>
+                            <div className="text-[11px] text-sky-600 font-mono font-semibold mt-0.5">Rp {app.c6_salary?.toLocaleString('id-ID')} / bln</div>
+                          </td>
                           <td className="px-6 py-4 font-mono text-xs font-bold text-slate-900">{app.c1_gpa?.toFixed(2)}</td>
                           <td className="px-6 py-4">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${app.status === 'Verified' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-amber-50 text-amber-700 border-amber-100 animate-pulse'}`}>{app.status === 'Verified' ? 'Terverifikasi' : 'Belum Diaudit'}</span>
@@ -192,8 +195,20 @@ function TADashboard() {
               {/* PANEL KIRI: DOSSIER CAPAIAN & FILE ATTACHMENT PELAMAR */}
               <div className="lg:col-span-7 space-y-6">
                 
+                {/* MODIFIKASI: MENAMPILKAN RINGKASAN DATA KUANTITATIF (IPK & SALARY EXPECTION) */}
+                <div className="grid grid-cols-2 gap-3 bg-slate-950 text-white p-4 rounded-2xl shadow-sm">
+                  <div className="space-y-0.5">
+                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">C1 - Nilai Klasifikasi IPK</span>
+                    <p className="text-sm font-bold font-mono text-emerald-400">{selectedApplicant.c1_gpa?.toFixed(2)} / 4.00</p>
+                  </div>
+                  <div className="space-y-0.5 border-l border-slate-800 pl-4">
+                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1"><Coins className="w-3 h-3 text-sky-400" /> C6 - Ekspektasi Kompensasi</span>
+                    <p className="text-sm font-bold font-mono text-sky-400">Rp {selectedApplicant.c6_salary?.toLocaleString('id-ID')}</p>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Verifikasi Berkas Utama (Klik Tautan)</span>
+                  <span className="text-[10px] font-bold text-slate-400 tracking-widest block uppercase">Verifikasi Berkas Utama (Klik Tautan)</span>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                     <a href={selectedApplicant.portfolioUrl} target="_blank" rel="noreferrer" className="p-3 bg-white border border-slate-200 hover:border-sky-400 rounded-2xl flex items-center justify-between text-xs font-semibold text-sky-600 shadow-sm group transition-all"><span className="truncate">Portofolio Kode</span><ExternalLink className="w-3 h-3 text-slate-400 group-hover:text-sky-600 shrink-0" /></a>
                     <a href={`${API_BASE_URL}/uploads/${selectedApplicant.cvName}`} target="_blank" rel="noreferrer" className="p-3 bg-white border border-slate-200 hover:border-sky-400 rounded-2xl flex items-center justify-between text-xs font-semibold text-slate-700 shadow-sm group transition-all"><span className="truncate">Dokumen CV</span><ExternalLink className="w-3 h-3 text-slate-400 group-hover:text-sky-600 shrink-0" /></a>
