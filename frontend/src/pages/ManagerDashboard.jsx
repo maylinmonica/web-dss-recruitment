@@ -145,9 +145,9 @@ function ManagerDashboard() {
             <div className="flex items-center gap-2.5">
               <Filter className="w-4 h-4 text-slate-400" />
               <div className="inline-flex bg-white border border-slate-200 rounded-full p-1 shadow-sm">
-                <button onClick={() => setCategory('All')} className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wide transition-all ${category === 'All' ? 'bg-slate-950 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Semua Kategori</button>
-                <button onClick={() => setCategory('Final Year')} className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wide transition-all ${category === 'Final Year' ? 'bg-slate-950 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Mahasiswa Tingkat Akhir</button>
-                <button onClick={() => setCategory('Fresh Graduate')} className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wide transition-all ${category === 'Fresh Graduate' ? 'bg-slate-950 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Lulusan Baru</button>
+               <button onClick={() => setCategory('All')} className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wide transition-all ${category === 'All' ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Semua Kategori</button>
+              <button onClick={() => setCategory('Final Year')} className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wide transition-all ${category === 'Final Year' ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Mahasiswa Tingkat Akhir</button>
+              <button onClick={() => setCategory('Fresh Graduate')} className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wide transition-all ${category === 'Fresh Graduate' ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Lulusan Baru</button>
               </div>
               <button onClick={() => fetchRanking(category)} className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:border-sky-400 rounded-full text-[11px] font-bold text-slate-500 hover:text-sky-600 transition-all shadow-sm"><RefreshCw className="w-3.5 h-3.5" /> Segarkan Halaman</button>
             </div>
@@ -208,7 +208,7 @@ function ManagerDashboard() {
                         <td className="px-6 py-4 font-mono text-xs text-slate-500">{r.d_minus}</td>
                         <td className="px-6 py-4 font-mono text-xs font-bold text-slate-900">{r.preference}</td>
                         <td className="px-6 py-4 text-right">
-                          <button onClick={() => handleFetchApplicantDetail(r.id)} disabled={detailLoading} className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-slate-950 hover:bg-sky-600 text-white rounded-full text-[11px] font-bold uppercase tracking-wider transition-all shadow-sm">Tinjau Berkas <ArrowRight className="w-3 h-3" /></button>
+                          <button onClick={() => handleFetchApplicantDetail(r.id)} disabled={detailLoading} className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded-full text-[11px] font-bold uppercase tracking-wider transition-all shadow-sm">Tinjau Berkas <ArrowRight className="w-3 h-3" /></button>
                         </td>
                       </tr>
                     ))}
@@ -286,8 +286,8 @@ function ManagerDashboard() {
                     {selectedApplicant.interviewDetails?.status === 'Scheduled' ? (
                       <div className="space-y-2">
                         <div className="p-3 bg-emerald-50 border border-emerald-100 text-emerald-800 rounded-xl text-xs text-center font-semibold">Kandidat ini telah disetujui untuk tahap wawancara.</div>
-                        {selectedApplicant.interviewDetails?.rescheduleRequest?.requested && (
-                          <button onClick={() => setScheduleModal({ id: selectedApplicant.id, name: selectedApplicant.name })} className="w-full py-2.5 bg-slate-900 hover:bg-sky-600 text-white rounded-full text-xs font-bold uppercase tracking-wider transition-colors">Sesuaikan Ulang Jadwal</button>
+                       {selectedApplicant.interviewDetails?.rescheduleRequest?.requested && (
+                          <button onClick={() => setScheduleModal({ id: selectedApplicant.id, name: selectedApplicant.name })} className="w-full py-2.5 bg-sky-600 hover:bg-sky-700 text-white rounded-full text-xs font-bold uppercase tracking-wider transition-colors">Sesuaikan Ulang Jadwal</button>
                         )}
                       </div>
                     ) : selectedApplicant.interviewDetails?.status === 'Rejected' ? (
@@ -317,7 +317,7 @@ function ManagerDashboard() {
               <div className="space-y-1.5"><label className="text-[11px] font-bold uppercase tracking-wider text-slate-600">Tautan Konferensi Video (Google Meet)</label><input type="url" required placeholder="https://meet.google.com/abc-defg-hij" value={scheduleForm.link} onChange={(e) => setScheduleForm(f => ({ ...f, link: e.target.value }))} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none" /></div>
               <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
                 <button type="button" onClick={() => setScheduleModal(null)} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-full text-xs font-bold uppercase tracking-wide transition-colors">Batal</button>
-                <button type="submit" disabled={decisionLoading === scheduleModal.id} className="px-5 py-2 bg-slate-950 hover:bg-sky-600 text-white rounded-full text-xs font-bold uppercase tracking-wide transition-all shadow-sm flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5" />Konfirmasi &amp; Setujui</button>
+                <button type="submit" disabled={decisionLoading === scheduleModal.id} className="px-5 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-full text-xs font-bold uppercase tracking-wide transition-all shadow-sm flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5" />Konfirmasi &amp; Setujui</button>
               </div>
             </form>
           </div>
