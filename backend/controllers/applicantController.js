@@ -38,7 +38,7 @@ exports.submitApplication = async (req, res) => {
             });
         }
 
-        const allApplicants = readApplicants();
+    const allApplicants = readApplicants() || [];
         const hasApplied = allApplicants.find(app => app.email && app.email.toLowerCase() === emailPelamar.toLowerCase());
 
         if (hasApplied) {
