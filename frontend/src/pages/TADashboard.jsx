@@ -4,7 +4,7 @@ import Sidebar from '../components/Sidebar';
 import { 
   Cpu, Users, FileText, CheckCircle2, Clock, AlertTriangle, 
   ExternalLink, ClipboardCheck, ArrowRight, ArrowLeft, Terminal, HelpCircle, X,
-  Coins // Impor ikon koin untuk representasi finansial/salary
+  Coins 
 } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
@@ -139,7 +139,7 @@ function TADashboard() {
                     <thead>
                       <tr className="border-b border-slate-100 bg-slate-50/30 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                         <th className="px-6 py-4">Informasi Pelamar</th>
-                        <th className="px-6 py-4">Kelompok Posisi &amp; Kompensasi</th> {/* MODIFIKASI HEADER */}
+                        <th className="px-6 py-4">Kelompok Posisi &amp; Kompensasi</th>
                         <th className="px-6 py-4">IPK</th>
                         <th className="px-6 py-4">Status Berkas</th>
                         <th className="px-6 py-4 text-right">Aksi Audit</th>
@@ -153,7 +153,6 @@ function TADashboard() {
                             <div className="text-xs text-slate-400 mt-0.5">{app.email}</div>
                           </td>
                           <td className="px-6 py-4">
-                            {/* MODIFIKASI: MENAMPILKAN SALARY DI SEBELAH POSISI */}
                             <div className="text-xs font-medium text-slate-600">{app.category === 'Final Year' ? 'Mahasiswa Tingkat Akhir' : 'Lulusan Baru'}</div>
                             <div className="text-[11px] text-sky-600 font-mono font-semibold mt-0.5">Rp {app.c6_salary?.toLocaleString('id-ID')} / bln</div>
                           </td>
@@ -195,15 +194,22 @@ function TADashboard() {
               {/* PANEL KIRI: DOSSIER CAPAIAN & FILE ATTACHMENT PELAMAR */}
               <div className="lg:col-span-7 space-y-6">
                 
-                {/* MODIFIKASI: MENAMPILKAN RINGKASAN DATA KUANTITATIF (IPK & SALARY EXPECTION) */}
-                <div className="grid grid-cols-2 gap-3 bg-slate-950 text-white p-4 rounded-2xl shadow-sm">
-                  <div className="space-y-0.5">
-                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">C1 - Nilai Klasifikasi IPK</span>
-                    <p className="text-sm font-bold font-mono text-emerald-400">{selectedApplicant.c1_gpa?.toFixed(2)} / 4.00</p>
+                {/* PERBAIKAN WARNA: Diubah dari Hitam ke Putih-Sky Bordered Card yang Minimalis */}
+                <div className="grid grid-cols-2 gap-4 bg-white border border-slate-200/60 p-5 rounded-2xl shadow-[0_12px_40px_rgba(15,23,42,0.015)]">
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">C1 - Nilai Indeks Prestasi Kumulatif</span>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-base sm:text-lg font-extrabold font-display text-slate-950">{selectedApplicant.c1_gpa?.toFixed(2)}</span>
+                      <span className="text-[11px] text-slate-400 font-medium">/ 4.00</span>
+                    </div>
                   </div>
-                  <div className="space-y-0.5 border-l border-slate-800 pl-4">
-                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1"><Coins className="w-3 h-3 text-sky-400" /> C6 - Ekspektasi Kompensasi</span>
-                    <p className="text-sm font-bold font-mono text-sky-400">Rp {selectedApplicant.c6_salary?.toLocaleString('id-ID')}</p>
+                  <div className="space-y-1 border-l border-slate-100 pl-4">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                      <Coins className="w-3.5 h-3.5 text-sky-500" /> C6 - Ekspektasi Kompensasi
+                    </span>
+                    <p className="text-base sm:text-lg font-extrabold font-mono text-sky-600">
+                      Rp {selectedApplicant.c6_salary?.toLocaleString('id-ID')}
+                    </p>
                   </div>
                 </div>
 
