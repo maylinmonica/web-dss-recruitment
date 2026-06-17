@@ -2,11 +2,6 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs'); 
 const { readUsers, saveUsers } = require('../dataStore');
 
-// =========================================================================
-// PERBAIKAN DI SINI: Baris "const { Resend } = require('resend')" 
-// dan "new Resend" telah dihapus agar server tidak mogok saat booting.
-// =========================================================================
-
 // 1. ENDPOINT: Registrasi Akun Pelamar
 exports.registerApplicant = async (req, res) => {
     const { email, password } = req.body;
@@ -17,6 +12,18 @@ exports.registerApplicant = async (req, res) => {
             ui_notice: {
                 title: "Data Belum Lengkap",
                 description: "Alamat email dan kata sandi wajib diisi untuk membuat akun baru.",
+                type: "warning"
+            }
+        });
+    }
+
+    // PERBAIKAN: Validasi panjang kata sandi minimal 8 karakter di sisi server
+    if (password.length < 8) {
+        return res.status(400).json({
+            status: "Fail",
+            ui_notice: {
+                title: "Kata Sandi Terlalu Pendek",
+                description: "Kata sandi wajib memiliki minimal 8 karakter.",
                 type: "warning"
             }
         });
@@ -49,11 +56,6 @@ exports.registerApplicant = async (req, res) => {
         users.push(newApplicant);
         saveUsers(users);
 
-        // =========================================================================
-        // PERBAIKAN DI SINI: Blok try-catch "resend.emails.send" sudah dihapus 
-        // secara aman agar pendaftaran tetap sukses tanpa perlu API Key email.
-        // =========================================================================
-
         return res.status(201).json({
             status: "Success",
             ui_notice: {
@@ -78,7 +80,6 @@ exports.loginUser = async (req, res) => {
         const users = readUsers();
         const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
 
-        // PERBAIKAN 1: Berikan notice spesifik jika email tidak ditemukan di database
         if (!user) {
             return res.status(404).json({ 
                 status: "Fail",
@@ -97,7 +98,6 @@ exports.loginUser = async (req, res) => {
             if (password === user.password) isMatch = true;
         }
 
-        // PERBAIKAN 2: Notice spesifik jika email ada tapi password-nya keliru
         if (!isMatch) {
             return res.status(401).json({ 
                 status: "Fail",

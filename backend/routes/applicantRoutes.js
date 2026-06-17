@@ -13,7 +13,11 @@ const {
 const { verifyToken, authorizeRoles } = require('../middlewares/authMiddleware');
 const upload = require('../middlewares/uploadMiddleware');
 
-// 1. Jalur Pelamar
+// ==========================================
+// 1. JALUR AKSES PELAMAR (APPLICANT)
+// ==========================================
+
+// Mengirimkan formulir aplikasi baru beserta berkas CV & Transkrip
 router.post(
     '/apply', 
     verifyToken, 
@@ -25,29 +29,30 @@ router.post(
     submitApplication
 );
 
-router.put(
-    '/decision/:id', 
-    verifyToken, 
-    authorizeRoles('HR Manager'), 
-    setInterviewDecision
-);
-
-// [Daftarkan rutenya tepat di bawah rute /me pelamar]
-router.post('/apply', verifyToken, authorizeRoles('Applicant'), upload.fields([{ name: 'cv', maxCount: 1 }, { name: 'transcript', maxCount: 1 }]), submitApplication);
+// Mengambil data aplikasi milik pelamar yang sedang login
 router.get('/me', verifyToken, authorizeRoles('Applicant'), getMyApplication);
 
-// RUTE BARU: Menampung kiriman data alasan perubahan jadwal dari akun pelamar
+// Mengajukan permohonan perubahan jadwal interview
 router.put('/reschedule-request', verifyToken, authorizeRoles('Applicant'), requestReschedule);
 
-router.get('/me', verifyToken, authorizeRoles('Applicant'), getMyApplication);
 
+// ==========================================
+// 2. JALUR AKSES PANEL MANAGEMENT (TA & HR)
+// ==========================================
+
+// HR Manager: Mengambil hasil komputasi matriks peringkat TOPSIS
 router.get('/ranking', verifyToken, authorizeRoles('HR Manager', 'Talent Acquisition'), getPerankingan);
 
-// 3. Jalur Panel TA
+// HR Manager: Memberikan keputusan final jadwal wawancara
+router.put('/decision/:id', verifyToken, authorizeRoles('HR Manager'), setInterviewDecision);
+
+// Talent Acquisition & HR: Melihat semua daftar pelamar masuk
 router.get('/', verifyToken, authorizeRoles('Talent Acquisition', 'HR Manager'), getAllApplicants);
+
+// Talent Acquisition: Menginput penilaian skor rubrik kualitatif dokumen
 router.put('/verify/:id', verifyToken, authorizeRoles('Talent Acquisition'), verifyApplicantScores);
+
+// Talent Acquisition & HR: Melihat detail profil satu pelamar berdasarkan ID
 router.get('/:id', verifyToken, authorizeRoles('Talent Acquisition', 'HR Manager'), getApplicantById); 
-
-
 
 module.exports = router;

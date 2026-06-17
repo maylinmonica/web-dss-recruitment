@@ -14,19 +14,14 @@ function Register() {
 
   const navigate = useNavigate();
 
-  // ROUTE GUARD: Memastikan rute publik bersih dari sisa token kedaluwarsa
   useEffect(() => {
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('userRole');
 
     if (token && role) {
-      if (role === 'Applicant') {
-        navigate('/apply');
-      } else if (role === 'Talent Acquisition') {
-        navigate('/ta/dashboard');
-      } else if (role === 'HR Manager') {
-        navigate('/manager/dashboard');
-      }
+      if (role === 'Applicant') navigate('/apply');
+      else if (role === 'Talent Acquisition') navigate('/ta/dashboard');
+      else if (role === 'HR Manager') navigate('/manager/dashboard');
     }
   }, [navigate]);
 
@@ -34,6 +29,17 @@ function Register() {
     e.preventDefault();
     setLoading(true);
     setNotice(null);
+
+    // PERBAIKAN: Validasi panjang kata sandi minimal 8 karakter di sisi client
+    if (password.length < 8) {
+      setNotice({
+        title: "Kata Sandi Terlalu Pendek",
+        description: "Kata sandi wajib memiliki minimal 8 karakter.",
+        type: "warning"
+      });
+      setLoading(false);
+      return;
+    }
 
     if (password !== confirmPassword) {
       setNotice({
@@ -46,10 +52,7 @@ function Register() {
     }
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/auth/register`, {
-        email,
-        password
-      });
+      const response = await axios.post(`${API_BASE_URL}/api/auth/register`, { email, password });
 
       if (response.data.status === 'Success' || response.status === 201) {
         setNotice(response.data.ui_notice || {
@@ -58,7 +61,6 @@ function Register() {
           type: "success"
         });
         
-        // Memberikan jeda waktu agar pengguna dapat membaca pesan sukses dengan nyaman
         setTimeout(() => {
           navigate('/login');
         }, 2500);
@@ -86,41 +88,30 @@ function Register() {
         .font-sans { font-family: 'Inter', sans-serif; }
       `}</style>
 
-      {/* Ambient Premium Radial Background Gradient */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(14,165,233,0.08),_transparent_35%),radial-gradient(circle_at_bottom_left,_rgba(15,23,42,0.03),_transparent_30%)] pointer-events-none" />
 
-      {/* NAVIGATION HEADER BAR */}
       <nav className="relative z-10 border-b border-slate-200/80 bg-[#F5F7FB]/50 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5 group shrink-0">
             <div className="bg-slate-950 text-white p-1.5 rounded-md group-hover:bg-sky-600 transition-colors duration-300 shadow-sm">
               <Cpu className="w-4 h-4" />
             </div>
-            <span className="text-md font-bold tracking-tight text-slate-950 font-display">
-              CoreNexus Labs
-            </span>
+            <span className="text-md font-bold tracking-tight text-slate-950 font-display">CoreNexus Labs</span>
           </Link>
         </div>
       </nav>
 
-      {/* FORM CONTAINER MIDDLE ALIGNMENT */}
       <div className="flex-1 flex items-center justify-center p-6 relative z-10">
         <div className="w-full max-w-md bg-white rounded-3xl border border-slate-200/60 p-8 sm:p-10 shadow-[0_20px_50px_rgba(15,23,42,0.03)]">
           <div className="space-y-2 mb-8">
-            <h2 className="text-3xl font-bold font-display text-slate-950 tracking-tight">
-              Create an account
-            </h2>
-            <p className="text-slate-500 text-xs sm:text-sm leading-relaxed">
-              Daftarkan email aktif Anda untuk mulai mengisi data kualifikasi lamaran fellowship program.
-            </p>
+            <h2 className="text-3xl font-bold font-display text-slate-950 tracking-tight">Create an account</h2>
+            <p className="text-slate-500 text-xs sm:text-sm leading-relaxed">Daftarkan email aktif Anda untuk mulai mengisi data kualifikasi lamaran fellowship program.</p>
           </div>
 
-          {/* DYNAMIC RESPONSIVE ALERT NOTICE */}
           {notice && (
             <div className={`mb-6 p-4 rounded-xl flex items-start gap-3 border animate-in fade-in slide-in-from-top-2 duration-200 ${
               notice.type === 'success' ? 'bg-emerald-50/60 border-emerald-100 text-emerald-900' :
-              notice.type === 'warning' ? 'bg-amber-50/60 border-amber-100 text-amber-900' :
-              'bg-rose-50/60 border-rose-100 text-rose-900'
+              notice.type === 'warning' ? 'bg-amber-50/60 border-amber-100 text-amber-900' : 'bg-rose-50/60 border-rose-100 text-rose-900'
             }`}>
               <div className="mt-0.5 flex-shrink-0">
                 {notice.type === 'success' && <CheckCircle className="w-4 h-4 text-emerald-600" />}
@@ -134,12 +125,9 @@ function Register() {
             </div>
           )}
 
-          {/* FORM ACCOUNT REGISTRATION */}
           <form onSubmit={handleRegister} className="space-y-5">
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Email Address
-              </label>
+              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Email Address</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-3.5 h-4 w-4 text-slate-400" />
                 <input
@@ -154,16 +142,14 @@ function Register() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                New Password
-              </label>
+              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">New Password</label>
               <div className="relative">
                 <Lock className="absolute left-4 top-3.5 h-4 w-4 text-slate-400" />
                 <input
                   type="password"
                   required
                   className="w-full pl-11 pr-4 py-3 bg-slate-50/50 border border-slate-200 focus:bg-white rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 text-sm transition-all duration-150"
-                  placeholder="Minimal 6 karakter"
+                  placeholder="Minimal 8 karakter" // DIUBAH DI SINI
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
@@ -171,9 +157,7 @@ function Register() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Confirm Password
-              </label>
+              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Confirm Password</label>
               <div className="relative">
                 <Lock className="absolute left-4 top-3.5 h-4 w-4 text-slate-400" />
                 <input
@@ -199,23 +183,17 @@ function Register() {
             </div>
           </form>
 
-          {/* REDIRECT SUB-LINK */}
           <div className="mt-8 text-center border-t border-slate-100 pt-5">
             <p className="text-xs text-slate-500">
               Sudah memiliki akun sebelumnya?{' '}
-              <Link to="/login" className="text-sky-600 hover:text-sky-700 font-semibold transition-colors">
-                Masuk di sini
-              </Link>
+              <Link to="/login" className="text-sky-600 hover:text-sky-700 font-semibold transition-colors">Masuk di sini</Link>
             </p>
           </div>
         </div>
       </div>
 
-      {/* FOOTER NOTATION */}
       <footer className="relative z-10 border-t border-slate-200 text-[11px] text-slate-400 font-medium bg-[#F5F7FB]/30">
-        <div className="max-w-6xl mx-auto px-6 py-5 text-center sm:text-left">
-          &copy; 2026 CoreNexus Labs. All Rights Reserved.
-        </div>
+        <div className="max-w-6xl mx-auto px-6 py-5 text-center sm:text-left">&copy; 2026 CoreNexus Labs. All Rights Reserved.</div>
       </footer>
     </div>
   );
