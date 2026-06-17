@@ -134,7 +134,7 @@ function Apply() {
       formData.append('awards', JSON.stringify(validAwards));
       formData.append('skillsList', JSON.stringify(techSkills)); 
 
-      const response = await axios.post('${API_BASE_URL}/api/applicants/apply', formData, {
+      const response = await axios.post(`${API_BASE_URL}/api/applicants/apply`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'

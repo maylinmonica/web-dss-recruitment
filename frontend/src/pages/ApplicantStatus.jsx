@@ -31,7 +31,7 @@ function ApplicantStatus() {
 
     const fetchStatus = async () => {
       try {
-        const response = await axios.get('${API_BASE_URL}/api/applicants/me', {
+        const response = await axios.get(`${API_BASE_URL}/api/applicants/me`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
