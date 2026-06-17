@@ -1,9 +1,11 @@
 const jwt = require('jsonwebtoken');
-const { Resend } = require('resend');
 const bcrypt = require('bcryptjs'); 
 const { readUsers, saveUsers } = require('../dataStore');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// =========================================================================
+// PERBAIKAN DI SINI: Baris "const { Resend } = require('resend')" 
+// dan "new Resend" telah dihapus agar server tidak mogok saat booting.
+// =========================================================================
 
 // 1. ENDPOINT: Registrasi Akun Pelamar
 exports.registerApplicant = async (req, res) => {
@@ -47,16 +49,10 @@ exports.registerApplicant = async (req, res) => {
         users.push(newApplicant);
         saveUsers(users);
 
-        try {
-            await resend.emails.send({
-                from: 'Sistem SPK Karier <onboarding@resend.dev>',
-                to: email,
-                subject: 'Selamat! Akun Pendaftaran Karier Anda Telah Aktif',
-                html: `<p>Halo, Akun Anda dengan email <strong>${email}</strong> telah berhasil dibuat secara aman.</p>`
-            });
-        } catch (emailError) {
-            console.warn("Notifikasi email pendaftaran dilewati:", emailError.message);
-        }
+        // =========================================================================
+        // PERBAIKAN DI SINI: Blok try-catch "resend.emails.send" sudah dihapus 
+        // secara aman agar pendaftaran tetap sukses tanpa perlu API Key email.
+        // =========================================================================
 
         return res.status(201).json({
             status: "Success",
