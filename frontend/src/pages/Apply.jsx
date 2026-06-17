@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Sidebar from '../components/Sidebar'; 
 import { 
-  User, FileText, Link2, Send, Award, Trash2, X, Briefcase, UploadCloud
+  User, FileText, Link2, Send, Award, Trash2, X, Briefcase, UploadCloud,
+  CheckCircle, AlertTriangle // PERBAIKAN: Impor ikon notifikasi agar konsisten dengan Login
 } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
@@ -142,7 +143,11 @@ function Apply() {
       });
 
       if (response.data.status === 'Success') {
-        setNotice(response.data.ui_notice);
+        setNotice(response.data.ui_notice || {
+          title: "Pendaftaran Berhasil",
+          description: "Seluruh berkas administrasi Anda sukses disimpan ke sistem pusat.",
+          type: "success"
+        });
         setName(''); setGpa(''); setSalary(''); setPortfolioUrl('');
         setCvFile(null); setTranscriptFile(null);
         setCerts([]); setAwards([]); setTechSkills([]);
@@ -175,6 +180,25 @@ function Apply() {
             <h2 className="text-2xl sm:text-3xl font-bold font-display text-slate-950 tracking-tight">Formulir Pengisian Berkas</h2>
             <p className="text-slate-500 text-xs sm:text-sm">Mohon isi profil akademis, unggah berkas kelayakan, dan dokumen sertifikat pendukung Anda dengan benar.</p>
           </div>
+
+          {/* PERBAIKAN: RENDER BANNER NOTIFIKASI DINAMIS (KONSISTEN DENGAN HALAMAN LOGIN) */}
+          {notice && (
+            <div className={`p-4 rounded-2xl flex items-start gap-3 border animate-in fade-in slide-in-from-top-2 duration-200 shadow-sm ${
+              notice.type === 'success' ? 'bg-emerald-50/60 border-emerald-100 text-emerald-900' :
+              notice.type === 'warning' ? 'bg-amber-50/60 border-amber-100 text-amber-900' :
+              'bg-rose-50/60 border-rose-100 text-rose-900'
+            }`}>
+              <div className="mt-0.5 shrink-0">
+                {notice.type === 'success' && <CheckCircle className="w-4 h-4 text-emerald-600" />}
+                {notice.type === 'warning' && <AlertTriangle className="w-4 h-4 text-amber-600" />}
+                {notice.type === 'error' && <AlertTriangle className="w-4 h-4 text-rose-600" />}
+              </div>
+              <div className="space-y-0.5">
+                <h4 className="font-bold text-xs uppercase tracking-wide">{notice.title}</h4>
+                <p className="text-xs opacity-90 leading-relaxed">{notice.description}</p>
+              </div>
+            </div>
+          )}
 
           <div className="bg-white rounded-3xl border border-slate-200/60 p-6 sm:p-8 shadow-[0_12px_40px_rgba(15,23,42,0.02)]">
             <form onSubmit={handleApply} className="space-y-10">
