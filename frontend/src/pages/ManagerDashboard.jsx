@@ -7,9 +7,7 @@ import {
   FileText, FileCheck, Terminal, ArrowLeft, ArrowRight
 } from 'lucide-react';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL.trim() !== ""
-  ? import.meta.env.VITE_API_URL
-  : "https://web-dss-recruitment-production.up.railway.app";
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 function ManagerDashboard() {
   const [category, setCategory] = useState('All');
