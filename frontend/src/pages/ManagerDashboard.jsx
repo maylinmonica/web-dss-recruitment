@@ -7,7 +7,9 @@ import {
   FileText, FileCheck, Terminal, ArrowLeft, ArrowRight
 } from 'lucide-react';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+const API_BASE_URL = import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL.trim() !== ""
+  ? import.meta.env.VITE_API_URL
+  : "https://web-dss-recruitment-production.up.railway.app";
 
 function ManagerDashboard() {
   const [category, setCategory] = useState('All');
@@ -259,11 +261,14 @@ function ManagerDashboard() {
               <div className="lg:col-span-7 space-y-6">
                 <div className="space-y-2">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Verifikasi Berkas Utama (Klik Tautan)</span>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                    <a href={selectedApplicant.portfolioUrl} target="_blank" rel="noreferrer" className="p-3 bg-white border border-slate-200 hover:border-sky-400 rounded-2xl flex items-center justify-between text-xs font-semibold text-sky-600 shadow-sm group transition-all"><span className="truncate">Portofolio Kode</span><ExternalLink className="w-3 h-3 text-slate-400 shrink-0" /></a>
-                    <a href={`${API_BASE_URL}/uploads/${selectedApplicant.cvName}`} target="_blank" rel="noreferrer" className="p-3 bg-white border border-slate-200 hover:border-sky-400 rounded-2xl flex items-center justify-between text-xs font-semibold text-slate-700 shadow-sm group transition-all"><span className="truncate">Dokumen CV</span><ExternalLink className="w-3 h-3 text-slate-400 shrink-0" /></a>
-                    <a href={`${API_BASE_URL}/uploads/${selectedApplicant.transcriptName}`} target="_blank" rel="noreferrer" className="p-3 bg-white border border-slate-200 hover:border-sky-400 rounded-2xl flex items-center justify-between text-xs font-semibold text-slate-700 shadow-sm group transition-all"><span className="truncate">Transkrip Nilai</span><ExternalLink className="w-3 h-3 text-slate-400 group-hover:text-sky-600 shrink-0" /></a>
-                  </div>
+                  {/* PERBAIKAN LINK DOKUMEN: Paksa mengambil alamat API dasar yang sudah terbukti sukses terkoneksi */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                      <a href={selectedApplicant.portfolioUrl} target="_blank" rel="noreferrer" className="p-3 bg-white border border-slate-200 hover:border-sky-400 rounded-2xl flex items-center justify-between text-xs font-semibold text-sky-600 shadow-sm group transition-all"><span className="truncate">Portofolio Kode</span><ExternalLink className="w-3 h-3 text-slate-400 shrink-0" /></a>
+                      
+                      <a href={`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/uploads/${selectedApplicant.cvName}`} target="_blank" rel="noreferrer" className="p-3 bg-white border border-slate-200 hover:border-sky-400 rounded-2xl flex items-center justify-between text-xs font-semibold text-slate-700 shadow-sm group transition-all"><span className="truncate">Dokumen CV</span><ExternalLink className="w-3 h-3 text-slate-400 group-hover:text-sky-600 shrink-0" /></a>
+                      
+                      <a href={`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/uploads/${selectedApplicant.transcriptName}`} target="_blank" rel="noreferrer" className="p-3 bg-white border border-slate-200 hover:border-sky-400 rounded-2xl flex items-center justify-between text-xs font-semibold text-slate-700 shadow-sm group transition-all"><span className="truncate">Transkrip Nilai</span><ExternalLink className="w-3 h-3 text-slate-400 group-hover:text-sky-600 shrink-0" /></a>
+                    </div>
                 </div>
 
                 <div className="space-y-2 bg-white p-4 border border-slate-200/60 rounded-2xl shadow-sm">
