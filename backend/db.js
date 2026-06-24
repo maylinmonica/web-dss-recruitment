@@ -90,7 +90,7 @@ const initDatabase = async () => {
       for (const app of defaultApplicants) {
         await client.query(insertApplicantQuery, [
           app.email, app.name, app.category, app.c1_gpa, app.c2_portfolio, app.c3_experience,
-          app.c4_merits, app.c5_skills, app.c6_salary, '', 'Curriculum_Vitae.pdf', 'Transkrip_Nilai_Terakhir.pdf',
+          app.c4_merits, app.c5_skills, app.c6_salary, '', '', '',
           JSON.stringify([]), JSON.stringify([]), JSON.stringify([]), app.status, JSON.stringify(defaultInterview)
         ]);
       }
