@@ -1,8 +1,11 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs'); 
-const { pool } = require('../db'); // Menggunakan koneksi database pg pool
+const { pool } = require('../db'); // Relational database pooling system connector initialization
 
-// 1. ENDPOINT: Registrasi Akun Pelamar
+/**
+ * Request Handler: Processes new applicant account registration.
+ * Validates credentials schema boundary rules and persists salted password configurations.
+ */
 exports.registerApplicant = async (req, res) => {
     const { email, password } = req.body;
 
@@ -29,7 +32,7 @@ exports.registerApplicant = async (req, res) => {
     }
 
     try {
-        // SQL: Cek apakah email sudah terdaftar di database
+        // Integrity Validation: Verify uniqueness constraints to prevent duplicate database record creation
         const userCheck = await pool.query('SELECT * FROM users WHERE LOWER(email) = LOWER($1)', [email]);
 
         if (userCheck.rows.length > 0) {
@@ -46,7 +49,7 @@ exports.registerApplicant = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // SQL: Simpan data user baru ke dalam tabel 'users'
+        // Persistence Routine: Insert verified payload data parameters into the users schema
         await pool.query(
             'INSERT INTO users (email, password, role) VALUES ($1, $2, $3)',
             [email.toLowerCase(), hashedPassword, "Applicant"]
@@ -69,11 +72,14 @@ exports.registerApplicant = async (req, res) => {
     }
 };
 
-// 2. ENDPOINT: Login Akun
+/**
+ * Request Handler: Authenticates existing system profiles.
+ * Verifies cryptographic password validation matching and provisions JWT session assets.
+ */
 exports.loginUser = async (req, res) => {
     const { email, password } = req.body;
     try {
-        // SQL: Cari data user berdasarkan email
+        // Query Execution: Query account registration entities matching current email token
         const userResult = await pool.query('SELECT * FROM users WHERE LOWER(email) = LOWER($1)', [email]);
         const user = userResult.rows[0];
 
