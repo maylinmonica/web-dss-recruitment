@@ -4,7 +4,7 @@ import axios from 'axios';
 import Sidebar from '../components/Sidebar'; 
 import { 
   User, FileText, Link2, Send, Award, Trash2, X, Briefcase, UploadCloud,
-  CheckCircle, AlertTriangle
+  CheckCircle2, AlertTriangle
 } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
@@ -119,8 +119,8 @@ function Apply() {
     const parsedGpa = parseFloat(gpa);
     if (isNaN(parsedGpa) || parsedGpa < 0 || parsedGpa > 4.00) {
       setNotice({
-        title: "Validasi Formulir Gagal",
-        description: "Format akumulasi nilai IPK tidak sesuai dengan ketentuan batas skala 0.00 hingga 4.00.",
+        title: "Validasi Gagal",
+        description: "Format Nilai IPK tidak sesuai ketentuan skala rentang 0.00 - 4.00.",
         type: "warning"
       });
       setLoading(false);
@@ -130,8 +130,8 @@ function Apply() {
     const parsedSalary = parseInt(salary, 10);
     if (isNaN(parsedSalary) || parsedSalary <= 0) {
       setNotice({
-        title: "Validasi Formulir Gagal",
-        description: "Nominal ekspektasi uang saku harus diisi berupa nilai angka bulat positif murni.",
+        title: "Validasi Gagal",
+        description: "Nominal kompensasi harus berupa nilai kuantitas numerik positif murni.",
         type: "warning"
       });
       setLoading(false);
@@ -140,8 +140,8 @@ function Apply() {
 
     if (parsedSalary > 99999999) {
       setNotice({
-        title: "Batas Pengisian Terlampaui",
-        description: "Nominal pengisian ekspektasi uang saku bulanan melebihi batas maksimum sistem.",
+        title: "Batas Maksimal Terlampaui",
+        description: "Nilai pengisian nominal kompensasi bulanan melebihi batas sistem.",
         type: "warning"
       });
       setLoading(false);
@@ -185,7 +185,7 @@ function Apply() {
       if (response.data.status === 'Success') {
         setNotice(response.data.ui_notice || {
           title: "Pendaftaran Berhasil",
-          description: "Seluruh berkas kelayakan dokumen administrasi Anda telah berhasil disimpan ke sistem pusat.",
+          description: "Seluruh berkas kelayakan administrasi Anda telah aman tersimpan.",
           type: "success"
         });
         setName(''); setGpa(''); setSalary(''); setPortfolioUrl('');
@@ -195,7 +195,7 @@ function Apply() {
     } catch (error) {
       setNotice(error.response?.data?.ui_notice || {
         title: "Gagal Mengirimkan Berkas",
-        description: "Terjadi gangguan koneksi jaringan menuju server repositori rekrutmen pusat.",
+        description: "Terjadi kendala transmisi data menuju jaringan server rekrutmen.",
         type: "error"
       });
     } finally {
@@ -214,30 +214,36 @@ function Apply() {
       <Sidebar />
 
       <div className="flex-1 flex flex-col relative overflow-y-auto">
+        
+        {/* 🛠️ SINKRONISASI: Toast Notification Overlay Identik dengan Dashboard Manager */}
+        {notice && (
+          <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 max-w-md w-full px-4 animate-in fade-in slide-in-from-top-4 duration-300">
+            <div className={`p-4 rounded-2xl border bg-white/90 backdrop-blur-md shadow-lg flex items-start gap-3.5 relative overflow-hidden ${
+              notice.type === 'success' ? 'border-emerald-100' : notice.type === 'warning' ? 'border-amber-100' : 'border-rose-100'
+            }`}>
+              <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${
+                notice.type === 'success' ? 'bg-emerald-500' : notice.type === 'warning' ? 'bg-amber-500' : 'bg-rose-500'
+              }`} />
+              <div className="shrink-0 pl-1">
+                {notice.type === 'success' && <CheckCircle2 className="w-5 h-5 text-emerald-600" />}
+                {notice.type === 'warning' && <AlertTriangle className="w-5 h-5 text-amber-600" />}
+                {notice.type === 'error' && <AlertTriangle className="w-5 h-5 text-rose-600" />}
+              </div>
+              <div className="flex-1 space-y-0.5 pr-4">
+                <h4 className="font-bold text-xs uppercase tracking-wider text-slate-900">{notice.title}</h4>
+                <p className="text-xs text-slate-500 leading-relaxed">{notice.description}</p>
+              </div>
+              <button onClick={() => setNotice(null)} className="text-slate-400 hover:text-slate-600 absolute right-3 top-3"><X className="w-4 h-4" /></button>
+            </div>
+          </div>
+        )}
+
         <main className="flex-1 p-6 sm:p-10 max-w-4xl w-full mx-auto space-y-8 relative z-10">
           <div className="space-y-1">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-100 uppercase tracking-wide">Pendaftaran Magang</div>
             <h2 className="text-2xl sm:text-3xl font-bold font-display text-slate-950 tracking-tight">Formulir Pengisian Berkas</h2>
             <p className="text-slate-500 text-xs sm:text-sm">Mohon isi profil akademis, unggah berkas kelayakan, and dokumen sertifikat pendukung Anda dengan benar.</p>
           </div>
-
-          {notice && (
-            <div className={`p-4 rounded-2xl flex items-start gap-3 border animate-in fade-in slide-in-from-top-2 duration-200 shadow-sm ${
-              notice.type === 'success' ? 'bg-emerald-50/60 border-emerald-100 text-emerald-900' :
-              notice.type === 'warning' ? 'bg-amber-50/60 border-amber-100 text-amber-900' :
-              'bg-rose-50/60 border-rose-100 text-rose-900'
-            }`}>
-              <div className="mt-0.5 shrink-0">
-                {notice.type === 'success' && <CheckCircle className="w-4 h-4 text-emerald-600" />}
-                {notice.type === 'warning' && <AlertTriangle className="w-4 h-4 text-amber-600" />}
-                {notice.type === 'error' && <AlertTriangle className="w-4 h-4 text-rose-600" />}
-              </div>
-              <div className="space-y-0.5">
-                <h4 className="font-bold text-xs uppercase tracking-wide">{notice.title}</h4>
-                <p className="text-xs opacity-90 leading-relaxed">{notice.description}</p>
-              </div>
-            </div>
-          )}
 
           <div className="bg-white rounded-3xl border border-slate-200/60 p-6 sm:p-8 shadow-[0_12px_40px_rgba(15,23,42,0.02)]">
             <form onSubmit={handleApply} className="space-y-10">
@@ -491,7 +497,7 @@ function Apply() {
                 <span className="text-[10px] text-slate-400 leading-normal block mt-1">Sertakan bukti piagam pencapaian kompetisi akademik maupun non-akademik sebagai berkas pendukung proses kualifikasi berkas administrasi.</span>
               </div>
 
-              {/* ACTION BUTTON */}
+              {/* SEKSI 7: SUBMIT */}
               <div className="pt-2">
                 <button type="submit" disabled={loading} className="w-full bg-slate-950 hover:bg-sky-600 text-white font-semibold py-3.5 rounded-full text-xs uppercase tracking-wider transition-all duration-300 shadow-sm flex items-center justify-center gap-2">
                   <Send className="w-3.5 h-3.5" />
