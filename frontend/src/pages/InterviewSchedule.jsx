@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import Sidebar from '../components/Sidebar';
-import { Calendar, Clock, Video, Lock, ExternalLink, Info, CheckCircle2, X, Send } from 'lucide-react';
+import { Calendar, Clock, Video, Lock, ExternalLink, Info, CheckCircle2, X, Send, AlertTriangle } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
@@ -10,7 +10,6 @@ function InterviewSchedule() {
   const [applicantData, setApplicantData] = useState(null);
   const [loading, setLoading] = useState(true);
   
-  // State untuk fitur permohonan perubahan jadwal
   const [rescheduleReason, setRescheduleReason] = useState('');
   const [submittingReschedule, setSubmittingReschedule] = useState(false);
   const [notice, setNotice] = useState(null);
@@ -28,7 +27,7 @@ function InterviewSchedule() {
       }
       setLoading(false);
     } catch (error) {
-      console.error("Gagal memuat jadwal wawancara pelamar:", error.message);
+      console.error("Data Retrieval Error:", error.message);
       setLoading(false);
     }
   };
@@ -53,7 +52,6 @@ function InterviewSchedule() {
     }
   }, [notice]);
 
-  // Handler simulasi pengiriman email / permohonan perubahan jadwal ke sistem
   const handleRequestReschedule = async (e) => {
     e.preventDefault();
     if (!rescheduleReason.trim()) return;
@@ -61,8 +59,10 @@ function InterviewSchedule() {
     setSubmittingReschedule(true);
     try {
       const token = localStorage.getItem('token');
+      
+      /* 🛠️ FIX MASTER: Mengubah single quote (') menjadi backtick (`) agar interpolasi string API_BASE_URL tereksekusi sempurna */
       const response = await axios.put(
-        '${API_BASE_URL}/api/applicants/reschedule-request',
+        `${API_BASE_URL}/api/applicants/reschedule-request`,
         { reason: rescheduleReason },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -70,7 +70,7 @@ function InterviewSchedule() {
       if (response.data.status === 'Success') {
         setNotice(response.data.ui_notice);
         setRescheduleReason('');
-        fetchStatus(); // Sinkronisasi ulang data terbaru kalender dari server
+        fetchStatus(); 
       }
     } catch (error) {
       setNotice(error.response?.data?.ui_notice || {
@@ -94,7 +94,6 @@ function InterviewSchedule() {
       <Sidebar />
 
       <div className="flex-1 flex flex-col relative overflow-y-auto">
-        {/* Sistem Notifikasi Toast */}
         {notice && (
           <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 max-w-md w-full px-4 animate-in fade-in slide-in-from-top-4 duration-300">
             <div className={`p-4 rounded-2xl border bg-white/90 backdrop-blur-md shadow-[0_20px_40px_rgba(15,23,42,0.08)] flex items-start gap-3.5 relative overflow-hidden ${notice.type === 'success' ? 'border-emerald-100' : 'border-rose-100'}`}>
@@ -111,21 +110,18 @@ function InterviewSchedule() {
 
         <main className="flex-1 p-6 sm:p-10 max-w-4xl w-full mx-auto space-y-8 z-10">
           
-          {/* HEADER SEKSI — UX WRITER STANDARD: DIUBAH DARI KONFIRMASI MENJADI INFORMASI LUGAS */}
           <div className="space-y-1">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-100 uppercase tracking-wide">Tahap Wawancara</div>
             <h2 className="text-2xl sm:text-3xl font-bold font-display text-slate-950 tracking-tight">Sesi Jadwal Pertemuan</h2>
             <p className="text-slate-500 text-xs sm:text-sm">Melihat informasi tanggal pelaksanaan serta tautan pertemuan virtual untuk sesi wawancara bersama tim penguji.</p>
           </div>
 
-          {/* PERCABANGAN STATE LAYOUT */}
           {loading ? (
             <div className="bg-white rounded-3xl border border-slate-200/60 p-12 text-center text-xs font-bold text-slate-400 uppercase tracking-widest">
               <span className="animate-pulse">Memuat Jadwal Pertemuan...</span>
             </div>
           ) : !applicantData ? (
             
-            // KONDISI AWAL: Pelamar belum mengirimkan berkas formulir sama sekali
             <div className="bg-white rounded-3xl border border-slate-200/60 p-8 sm:p-12 shadow-[0_12px_40px_rgba(15,23,42,0.02)] flex flex-col items-center justify-center text-center space-y-5">
               <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl text-slate-400 shadow-sm"><Lock className="w-6 h-6" /></div>
               <div className="space-y-2">
@@ -139,13 +135,12 @@ function InterviewSchedule() {
 
           ) : applicantButtonState(applicantData) === "LOCKED_BY_TA" ? (
             
-            // KONDISI KEDUA: Berkas sudah dikirim, tapi tim TA belum selesai melakukan audit
             <div className="bg-white rounded-3xl border border-slate-200/60 p-8 sm:p-12 shadow-[0_12px_40px_rgba(15,23,42,0.02)] flex flex-col items-center justify-center text-center space-y-5">
               <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl text-slate-400 shadow-sm"><Clock className="w-6 h-6" /></div>
               <div className="space-y-2">
                 <h3 className="text-base font-bold text-slate-900 uppercase tracking-wide">Proses Verifikasi Berkas</h3>
                 <p className="text-slate-500 text-sm leading-relaxed max-w-md mx-auto">
-                  Berkas pendaftaran Anda telah berhasil disimpan. Saat ini dokumen Anda sedang dalam proses pemeriksaan kelayakan oleh tim Talent Acquisition.
+                  Berkas pendaftaran Anda telah berhasil disimpan. Saat ini dokumen Anda sedang dalam proses pemeriksaan kelayakan oleh tim seleksi administrasi.
                 </p>
               </div>
               <div className="p-3 bg-slate-50 rounded-xl flex items-center gap-2.5 text-[11px] text-slate-500 font-medium border border-slate-200/60 max-w-md w-full text-left">
@@ -156,7 +151,6 @@ function InterviewSchedule() {
 
           ) : applicantButtonState(applicantData) === "REJECTED" ? (
             
-            // KONDISI TAHAP REJECTED: Status Ditolak oleh Manager
             <div className="bg-white rounded-3xl border border-slate-200/60 p-8 sm:p-12 shadow-[0_12px_40px_rgba(15,23,42,0.02)] flex flex-col items-center justify-center text-center space-y-5">
               <div className="p-4 bg-rose-50 border border-rose-100 text-rose-500 rounded-2xl shadow-sm"><Lock className="w-6 h-6" /></div>
               <div className="space-y-2">
@@ -169,20 +163,18 @@ function InterviewSchedule() {
 
           ) : applicantButtonState(applicantData) === "IN_TOPSIS_POOL" ? (
             
-            // KONDISI KETIGA: Sudah di-review TA, masuk matriks keputusan, menunggu Approval HR Manager
             <div className="bg-white rounded-3xl border border-slate-200/60 p-8 sm:p-12 shadow-[0_12px_40px_rgba(15,23,42,0.02)] flex flex-col items-center justify-center text-center space-y-5">
               <div className="p-4 bg-sky-50 border border-sky-100 text-sky-600 rounded-2xl shadow-sm"><CheckCircle2 className="w-6 h-6" /></div>
               <div className="space-y-2">
-                <h3 className="text-base font-bold text-slate-900 uppercase tracking-wide">Tahap Sinkronisasi Nilai</h3>
+                <h3 className="text-base font-bold text-slate-900 uppercase tracking-wide">Tahap Evaluasi Berkas</h3>
                 <p className="text-slate-500 text-sm leading-relaxed max-w-md mx-auto">
-                  Verifikasi dokumen oleh tim Talent Acquisition telah selesai. Data kualifikasi Anda berhasil diteruskan ke panel HR Manager untuk tahap evaluasi dan penentuan jadwal wawancara resmi.
+                  Verifikasi dokumen oleh tim seleksi telah selesai. Data kualifikasi berkas Anda berhasil diteruskan ke panel penilai manajemen untuk penentuan keputusan jadwal wawancara resmi.
                 </p>
               </div>
             </div>
 
           ) : (
             
-            // KONDISI UTAMA APPROVED: JADWAL AKTIF
             <div className="space-y-6 animate-in fade-in duration-300">
               
               {/* KARTU JADWAL WAWANCARA */}
@@ -216,7 +208,7 @@ function InterviewSchedule() {
                   <div className="flex items-center gap-3.5">
                     <div className="p-3 bg-sky-50 text-sky-600 rounded-xl border border-sky-100"><Video className="w-5 h-5" /></div>
                     <div>
-                      <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide">Google Meet Room</h4>
+                      <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide">Ruang Pertemuan Virtual</h4>
                       <p className="text-xs text-slate-400 mt-0.5">Harap gunakan akun email yang terdaftar saat memasuki ruang pertemuan virtual.</p>
                     </div>
                   </div>
@@ -232,7 +224,7 @@ function InterviewSchedule() {
                 </div>
               </div>
 
-              {/* ── INJEKSI FITUR BARU: FORM PERMOHONAN RESCHEDULE (SINKRON & KONSISTEN) ── */}
+              {/* FORM PERMOHONAN RESCHEDULE */}
               <div className="bg-white rounded-3xl border border-slate-200/60 p-6 sm:p-8 shadow-[0_12px_40px_rgba(15,23,42,0.02)] space-y-4">
                 <div className="border-b border-slate-100 pb-3">
                   <h3 className="text-sm font-bold font-display text-slate-950 uppercase tracking-wider flex items-center gap-2">
