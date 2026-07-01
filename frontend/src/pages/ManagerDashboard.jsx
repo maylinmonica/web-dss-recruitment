@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'react-serif';
 import axios from 'axios';
 import Sidebar from '../components/Sidebar';
 import {
@@ -10,10 +11,10 @@ import {
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 function ManagerDashboard() {
-  const [viewMode, setViewMode] = useState('topsis'); // 'topsis' atau 'history'
+  const [viewMode, setViewMode] = useState('topsis'); 
   const [category, setCategory] = useState('All');
   const [ranking, setRanking] = useState([]);
-  const [historyList, setHistoryList] = useState([]); // State untuk menampung riwayat data lama
+  const [historyList, setHistoryList] = useState([]); 
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState(null);
 
@@ -26,7 +27,31 @@ function ManagerDashboard() {
 
   const token = localStorage.getItem('token');
 
-  // Fetch data perankingan aktif metode TOPSIS
+  /**
+   * Mengambil string tanggal hari ini dengan format ISO YYYY-MM-DD.
+   * Berfungsi sebagai batas bawah (minimum date) pada validasi kalender.
+   */
+  const getTodayString = () => {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  /**
+   * Mengambil string tanggal batas maksimal dengan format ISO YYYY-MM-DD.
+   * Berfungsi sebagai batas atas (maximum date) penguncian jadwal pertemuan (90 hari ke depan).
+   */
+  const getMaxDateString = () => {
+    const limitDate = new Date();
+    limitDate.setDate(limitDate.getDate() + 90);
+    const yyyy = limitDate.getFullYear();
+    const mm = String(limitDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(limitDate.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
   const fetchRanking = async (cat) => {
     setLoading(true);
     try {
@@ -44,7 +69,6 @@ function ManagerDashboard() {
     }
   };
 
-  // Fetch data seluruh riwayat untuk pelamar yang sudah diputuskan
   const fetchHistoryData = async () => {
     setLoading(true);
     try {
@@ -52,7 +76,6 @@ function ManagerDashboard() {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.data.status === 'Success') {
-        // Filter hanya yang sudah mendapat keputusan (Scheduled / Rejected)
         const decided = res.data.data.filter(app => 
           app.interviewDetails?.status === 'Scheduled' || app.interviewDetails?.status === 'Rejected'
         );
@@ -129,6 +152,25 @@ function ManagerDashboard() {
 
   const handleApproveSubmit = (e) => {
     e.preventDefault();
+
+    const selectedDate = new Date(scheduleForm.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const maxFutureDate = new Date();
+    maxFutureDate.setDate(maxFutureDate.getDate() + 90);
+    maxFutureDate.setHours(23, 59, 59, 999);
+
+    // Validasi mandat runtime pengecekan silsilah waktu internal browser
+    if (selectedDate < today || selectedDate > maxFutureDate) {
+      setNotice({
+        title: 'Tanggal Tidak Valid',
+        description: 'Penjadwalan harus berada dalam rentang hari ini hingga maksimal 90 hari ke depan.',
+        type: 'error'
+      });
+      return;
+    }
+
     handleDecision(scheduleModal.id, 'Approved', scheduleForm);
   };
 
@@ -178,10 +220,9 @@ function ManagerDashboard() {
                 <p className="text-slate-500 text-xs sm:text-sm">Pantau hasil rekomendasi otomatisasi peringkat pelamar magang berdasarkan bobot kriteria aktif.</p>
               </div>
               
-              {/* INTERFACES SWITCHER: Navigasi Antrean vs Riwayat */}
               <div className="inline-flex bg-white border border-slate-200 rounded-2xl p-1 shadow-sm shrink-0 h-fit">
                 <button onClick={() => setViewMode('topsis')} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${viewMode === 'topsis' ? 'bg-slate-950 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>
-                  <TrendingUp className="w-3.5 h-3.5" /> Antrean TOPSIS
+                  <TrendingUp className="w-3.5 h-3.5" /> Antrean Rekomendasi
                 </button>
                 <button onClick={() => setViewMode('history')} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${viewMode === 'history' ? 'bg-slate-950 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>
                   <FileCheck className="w-3.5 h-3.5" /> Riwayat Keputusan
@@ -189,10 +230,8 @@ function ManagerDashboard() {
               </div>
             </div>
 
-            {/* SEKSI HALAMAN KONDISI 1: ANTREAN TOPSIS AKTIF */}
             {viewMode === 'topsis' ? (
               <>
-                {/* FILTER KATEGORI */}
                 <div className="flex items-center gap-2.5">
                   <Filter className="w-4 h-4 text-slate-400" />
                   <div className="inline-flex bg-white border border-slate-200 rounded-full p-1 shadow-sm">
@@ -203,7 +242,6 @@ function ManagerDashboard() {
                   <button onClick={() => refreshCurrentView()} className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:border-sky-400 rounded-full text-[11px] font-bold text-slate-500 hover:text-sky-600 transition-all shadow-sm"><RefreshCw className="w-3.5 h-3.5" /> Segarkan Halaman</button>
                 </div>
 
-                {/* GRAFIK PREFERENSI */}
                 <div className="bg-white rounded-3xl border border-slate-200/60 shadow-[0_12px_40px_rgba(15,23,42,0.02)] overflow-hidden">
                   <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                     <div className="flex items-center gap-2.5"><TrendingUp className="w-4 h-4 text-sky-500" /><h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">Visualisasi Nilai Kelayakan Kelompok</h3></div>
@@ -230,7 +268,6 @@ function ManagerDashboard() {
                   </div>
                 </div>
 
-                {/* TABEL URUTAN REKOMENDASI KANDIDAT */}
                 <div className="bg-white rounded-3xl border border-slate-200/60 shadow-[0_12px_40px_rgba(15,23,42,0.02)] overflow-hidden">
                   <div className="px-6 py-5 border-b border-slate-100 flex items-center gap-2.5 bg-slate-50/50"><Award className="w-4 h-4 text-sky-500" /><h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">Tabel Urutan Urgensi Hasil Seleksi</h3></div>
                   <div className="overflow-x-auto">
@@ -275,8 +312,6 @@ function ManagerDashboard() {
                 </div>
               </>
             ) : (
-              
-              /* SEKSI HALAMAN KONDISI 2: TAB RIWAYAT KEPUTUSAN FINAL MANAGER */
               <div className="bg-white rounded-3xl border border-slate-200/60 shadow-[0_12px_40px_rgba(15,23,42,0.02)] overflow-hidden animate-in fade-in duration-200">
                 <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                   <div className="flex items-center gap-2.5"><FileCheck className="w-4 h-4 text-slate-500" /><h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">Arsip Keputusan Kelayakan Final</h3></div>
@@ -302,13 +337,13 @@ function ManagerDashboard() {
                         historyList.map((app) => (
                           <tr key={app.id} className="hover:bg-slate-50/50 transition-colors duration-150">
                             <td className="px-6 py-4 font-semibold text-slate-900 text-sm">{app.name}</td>
-                            <td className="px-6 py-4 text-xs font-medium text-slate-500">{app.category === 'Final Year' ? 'Mahasiswa Tingkat Akhir' : 'Lulusan Baru'}</td>
-                            <td className="px-6 py-4 font-mono text-xs font-bold text-slate-800">{app.c1_gpa?.toFixed(2)}</td>
+                            <td className="px-6 py-4 text-xs font-medium text-slate-500">{app.category === 'Final Year' ? 'Mahasiswa Tingkah Akhir' : 'Lulusan Baru'}</td>
+                            <td className="px-6 py-4 font-mono text-xs font-bold text-slate-800">{app.c1_gpa ? Number(app.c1_gpa).toFixed(2) : '0.00'}</td>
                             <td className="px-6 py-4">
                               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
                                 app.interviewDetails?.status === 'Scheduled' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'
                               }`}>
-                                {app.interviewDetails?.status === 'Scheduled' ? 'Lolos Wawancara' : 'Berkas Ditolak'}
+                                {app.interviewDetails?.status === 'Scheduled' ? 'Lolos Administrasi' : 'Berkas Ditolak'}
                               </span>
                             </td>
                             <td className="px-6 py-4 text-right">
@@ -325,11 +360,10 @@ function ManagerDashboard() {
           </main>
         ) : (
           
-          /* VIEW WORKSPACE UTAMA: AUDIT BERKAS DETIL PELAMAR */
           <main className="main-workspace-container flex-1 p-6 sm:p-10 space-y-6 relative z-10 animate-in fade-in duration-200">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
               <div className="space-y-0.5">
-                <button onClick={() => setSelectedApplicant(null)} className="inline-flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-sky-600 transition-colors uppercase tracking-wider mb-1"><ArrowLeft className="w-3.5 h-3.5" /> Kembali</button>
+                <button onClick={() => setSelectedApplicant(null)} className="inline-flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-sky-600 transition-colors uppercase tracking-wider mb-1"><ArrowLeft className="w-3.5 h-3.5" /> Kembali Ke Pemeringkatan</button>
                 <h2 className="text-xl sm:text-2xl font-bold font-display text-slate-950 tracking-tight">Audit Dokumen Rekrutmen</h2>
                 <p className="text-xs text-slate-400">Kandidat Aktif: <span className="font-semibold text-slate-600">{selectedApplicant.name} ({selectedApplicant.email})</span></p>
               </div>
@@ -339,11 +373,11 @@ function ManagerDashboard() {
               <div className="lg:col-span-7 space-y-6">
                 <div className="space-y-2">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Verifikasi Berkas Utama (Klik Tautan)</span>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                    <a href={selectedApplicant.portfolioUrl} target="_blank" rel="noreferrer" className="p-3 bg-white border border-slate-200 hover:border-sky-400 rounded-2xl flex items-center justify-between text-xs font-semibold text-sky-600 shadow-sm group transition-all"><span className="truncate">Portofolio Kode</span><ExternalLink className="w-3 h-3 text-slate-400 shrink-0" /></a>
-                    <a href={`${API_BASE_URL}/uploads/${selectedApplicant.cvName}`} target="_blank" rel="noreferrer" className="p-3 bg-white border border-slate-200 hover:border-sky-400 rounded-2xl flex items-center justify-between text-xs font-semibold text-slate-700 shadow-sm group transition-all"><span className="truncate">Dokumen CV</span><ExternalLink className="w-3 h-3 text-slate-400 shrink-0" /></a>
-                    <a href={`${API_BASE_URL}/uploads/${selectedApplicant.transcriptName}`} target="_blank" rel="noreferrer" className="p-3 bg-white border border-slate-200 hover:border-sky-400 rounded-2xl flex items-center justify-between text-xs font-semibold text-slate-700 shadow-sm group transition-all"><span className="truncate">Transkrip Nilai</span><ExternalLink className="w-3 h-3 text-slate-400 group-hover:text-sky-600 shrink-0" /></a>
-                  </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                      <a href={selectedApplicant.portfolioUrl} target="_blank" rel="noreferrer" className="p-3 bg-white border border-slate-200 hover:border-sky-400 rounded-2xl flex items-center justify-between text-xs font-semibold text-sky-600 shadow-sm group transition-all"><span className="truncate">Portofolio Kode</span><ExternalLink className="w-3 h-3 text-slate-400 shrink-0" /></a>
+                      <a href={`${API_BASE_URL}/uploads/${selectedApplicant.cvName}`} target="_blank" rel="noreferrer" className="p-3 bg-white border border-slate-200 hover:border-sky-400 rounded-2xl flex items-center justify-between text-xs font-semibold text-slate-700 shadow-sm group transition-all"><span className="truncate">Dokumen CV</span><ExternalLink className="w-3 h-3 text-slate-400 group-hover:text-sky-600 shrink-0" /></a>
+                      <a href={`${API_BASE_URL}/uploads/${selectedApplicant.transcriptName}`} target="_blank" rel="noreferrer" className="p-3 bg-white border border-slate-200 hover:border-sky-400 rounded-2xl flex items-center justify-between text-xs font-semibold text-slate-700 shadow-sm group transition-all"><span className="truncate">Transkrip Nilai</span><ExternalLink className="w-3 h-3 text-slate-400 group-hover:text-sky-600 shrink-0" /></a>
+                    </div>
                 </div>
 
                 <div className="space-y-2 bg-white p-4 border border-slate-200/60 rounded-2xl shadow-sm">
@@ -377,7 +411,7 @@ function ManagerDashboard() {
                 <div className="bg-white rounded-2xl border border-slate-200/60 p-5 shadow-sm space-y-5">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-2 flex items-center gap-1.5"><FileCheck className="w-4 h-4 text-sky-500" /> Ringkasan Skor Kualifikasi</h3>
                   <div className="grid grid-cols-2 gap-4 text-xs">
-                    <div><span className="text-slate-400 block">IPK Akhir Pelamar:</span><span className="font-mono font-bold text-slate-900 text-sm">{selectedApplicant.c1_gpa?.toFixed(2)}</span></div>
+                    <div><span className="text-slate-400 block">IPK Akhir Pelamar:</span><span className="font-mono font-bold text-slate-900 text-sm">{selectedApplicant.c1_gpa ? Number(selectedApplicant.c1_gpa).toFixed(2) : '0.00'}</span></div>
                     <div><span className="text-slate-400 block">Ekspektasi Uang Saku:</span><span className="font-mono font-bold text-slate-900 text-sm">{formatRupiah(selectedApplicant.c6_salary)}</span></div>
                   </div>
 
@@ -422,9 +456,42 @@ function ManagerDashboard() {
           <div className="bg-white rounded-3xl border border-slate-200 shadow-xl max-w-md w-full p-6 space-y-4 animate-in zoom-in-95 duration-150">
             <div className="space-y-1"><h3 className="text-sm font-bold font-display text-slate-950 flex items-center gap-2"><Video className="w-4 h-4 text-slate-500" /> Tentukan Jadwal Wawancara</h3><p className="text-xs text-slate-400">Kandidat Terpilih: <span className="font-semibold text-slate-700">{scheduleModal.name}</span></p></div>
             <form onSubmit={handleApproveSubmit} className="space-y-4">
-              <div className="space-y-1.5"><label className="text-[11px] font-bold uppercase tracking-wider text-slate-600">Tanggal Pertemuan</label><input type="date" required value={scheduleForm.date} onChange={(e) => setScheduleForm(f => ({ ...f, date: e.target.value }))} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none" /></div>
-              <div className="space-y-1.5"><label className="text-[11px] font-bold uppercase tracking-wider text-slate-600">Waktu Pelaksanaan</label><input type="time" required value={scheduleForm.time} onChange={(e) => setScheduleForm(f => ({ ...f, time: e.target.value }))} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none" /></div>
-              <div className="space-y-1.5"><label className="text-[11px] font-bold uppercase tracking-wider text-slate-600">Tautan Konferensi Video (Google Meet)</label><input type="url" required placeholder="https://meet.google.com/abc-defg-hij" value={scheduleForm.link} onChange={(e) => setScheduleForm(f => ({ ...f, link: e.target.value }))} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none" /></div>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600">Tanggal Pertemuan</label>
+                <input 
+                  type="date" 
+                  required 
+                  min={getTodayString()}
+                  max={getMaxDateString()}
+                  value={scheduleForm.date} 
+                  onChange={(e) => setScheduleForm(f => ({ ...f, date: e.target.value }))} 
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none" 
+                />
+                <span className="text-[10px] text-slate-400 block mt-1">Tanggal pelaksanaan dibatasi mulai dari hari ini hingga maksimal 90 hari ke depan.</span>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600">Waktu Pelaksanaan</label>
+                <input 
+                  type="time" 
+                  required 
+                  value={scheduleForm.time} 
+                  onChange={(e) => setScheduleForm(f => ({ ...f, time: e.target.value }))} 
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none" 
+                />
+                <span className="text-[10px] text-slate-400 block mt-1">Gunakan format waktu 24 jam untuk keselarasan agenda wawancara resmi perusahaan.</span>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600">Tautan Konferensi Video (Google Meet)</label>
+                <input 
+                  type="url" 
+                  required 
+                  placeholder="https://meet.google.com/abc-defg-hij" 
+                  value={scheduleForm.link} 
+                  onChange={(e) => setScheduleForm(f => ({ ...f, link: e.target.value }))} 
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none" 
+                />
+                <span className="text-[10px] text-slate-400 block mt-1">Sertakan alamat tautan URL ruang virtual yang valid agar pelamar dapat mengakses sesi.</span>
+              </div>
               <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
                 <button type="button" onClick={() => setScheduleModal(null)} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-full text-xs font-bold uppercase tracking-wide transition-colors">Batal</button>
                 <button type="submit" disabled={decisionLoading === scheduleModal.id} className="px-5 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-full text-xs font-bold uppercase tracking-wide transition-all shadow-sm flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5" />Konfirmasi &amp; Setujui</button>
