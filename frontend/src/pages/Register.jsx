@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { Lock, Mail, CheckCircle2, AlertTriangle, Cpu, ArrowRight, X } from 'lucide-react';
+import { Lock, Mail, CheckCircle, AlertTriangle, Cpu, ArrowRight } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
@@ -14,10 +14,6 @@ function Register() {
 
   const navigate = useNavigate();
 
-  /**
-   * Session route guard validation matrix.
-   * Intercepts unauthenticated mounts and forces state redirection based on validated access token.
-   */
   useEffect(() => {
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('userRole');
@@ -29,26 +25,12 @@ function Register() {
     }
   }, [navigate]);
 
-  /**
-   * Notice banner lifecycle observer hook.
-   * Disposes current active alert notice references from state array post countdown timeout.
-   */
-  useEffect(() => {
-    if (notice) {
-      const timer = setTimeout(() => setNotice(null), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [notice]);
-
-  /**
-   * Account registration transaction controller pipeline.
-   * Validates state structural attributes before forwarding payload array to system endpoints.
-   */
   const handleRegister = async (e) => {
     e.preventDefault();
     setLoading(true);
     setNotice(null);
 
+    // PERBAIKAN: Validasi panjang kata sandi minimal 8 karakter di sisi client
     if (password.length < 8) {
       setNotice({
         title: "Kata Sandi Terlalu Pendek",
@@ -79,10 +61,6 @@ function Register() {
           type: "success"
         });
         
-        /**
-         * Deliberate interface transition delay cadence.
-         * Grants sufficient interface compilation time to render the success state notification.
-         */
         setTimeout(() => {
           navigate('/login');
         }, 2500);
@@ -93,7 +71,7 @@ function Register() {
       } else {
         setNotice({
           title: "Pendaftaran Gagal",
-          description: "Gagal terhubung ke sistem registrasi. Periksa kembali status koneksi jaringan Anda.",
+          description: "Gagal terhubung ke sistem registrasi. Periksa kembali status jaringan backend Anda.",
           type: "error"
         });
       }
@@ -113,7 +91,7 @@ function Register() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(14,165,233,0.08),_transparent_35%),radial-gradient(circle_at_bottom_left,_rgba(15,23,42,0.03),_transparent_30%)] pointer-events-none" />
 
       <nav className="relative z-10 border-b border-slate-200/80 bg-[#F5F7FB]/50 backdrop-blur-sm">
-        <div className="max-w-4xl mx-auto px-6 py-5 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5 group shrink-0">
             <div className="bg-slate-950 text-white p-1.5 rounded-md group-hover:bg-sky-600 transition-colors duration-300 shadow-sm">
               <Cpu className="w-4 h-4" />
@@ -124,69 +102,62 @@ function Register() {
       </nav>
 
       <div className="flex-1 flex items-center justify-center p-6 relative z-10">
-        <div className="w-full max-w-md bg-white rounded-3xl border border-slate-200/60 p-8 sm:p-10 shadow-[0_12px_40px_rgba(15,23,42,0.02)]">
+        <div className="w-full max-w-md bg-white rounded-3xl border border-slate-200/60 p-8 sm:p-10 shadow-[0_20px_50px_rgba(15,23,42,0.03)]">
           <div className="space-y-2 mb-8">
-            <h2 className="text-3xl font-bold font-display text-slate-950 tracking-tight">Registrasi Akun Baru</h2>
-            <p className="text-slate-500 text-xs sm:text-sm leading-relaxed">Daftarkan alamat email resmi Anda untuk mulai melakukan pengisian berkas kualifikasi pendaftaran program.</p>
+            <h2 className="text-3xl font-bold font-display text-slate-950 tracking-tight">Create an account</h2>
+            <p className="text-slate-500 text-xs sm:text-sm leading-relaxed">Daftarkan email aktif Anda untuk mulai mengisi data kualifikasi lamaran fellowship program.</p>
           </div>
 
           {notice && (
-            <div className="mb-6 animate-in fade-in slide-in-from-top-4 duration-300">
-              <div className={`p-4 rounded-2xl border bg-white/90 backdrop-blur-md shadow-lg flex items-start gap-3.5 relative overflow-hidden ${
-                notice.type === 'success' ? 'border-emerald-100' : 'border-rose-100'
-              }`}>
-                <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${
-                  notice.type === 'success' ? 'bg-emerald-500' : notice.type === 'warning' ? 'bg-amber-500' : 'bg-rose-500'
-                }`} />
-                <div className="shrink-0 pl-1">
-                  {notice.type === 'success' && <CheckCircle2 className="w-5 h-5 text-emerald-600" />}
-                  {notice.type === 'warning' && <AlertTriangle className="w-5 h-5 text-amber-600" />}
-                  {notice.type === 'error' && <AlertTriangle className="w-5 h-5 text-rose-600" />}
-                </div>
-                <div className="flex-1 space-y-0.5 pr-4">
-                  <h4 className="font-bold text-xs uppercase tracking-wider text-slate-900">{notice.title}</h4>
-                  <p className="text-xs text-slate-500 leading-relaxed">{notice.description}</p>
-                </div>
-                <button type="button" onClick={() => setNotice(null)} className="text-slate-400 hover:text-slate-600 absolute right-3 top-3"><X className="w-4 h-4" /></button>
+            <div className={`mb-6 p-4 rounded-xl flex items-start gap-3 border animate-in fade-in slide-in-from-top-2 duration-200 ${
+              notice.type === 'success' ? 'bg-emerald-50/60 border-emerald-100 text-emerald-900' :
+              notice.type === 'warning' ? 'bg-amber-50/60 border-amber-100 text-amber-900' : 'bg-rose-50/60 border-rose-100 text-rose-900'
+            }`}>
+              <div className="mt-0.5 flex-shrink-0">
+                {notice.type === 'success' && <CheckCircle className="w-4 h-4 text-emerald-600" />}
+                {notice.type === 'warning' && <AlertTriangle className="w-4 h-4 text-amber-600" />}
+                {notice.type === 'error' && <AlertTriangle className="w-4 h-4 text-rose-600" />}
+              </div>
+              <div className="space-y-0.5">
+                <h4 className="font-bold text-xs uppercase tracking-wide">{notice.title}</h4>
+                <p className="text-xs opacity-90 leading-relaxed">{notice.description}</p>
               </div>
             </div>
           )}
 
           <form onSubmit={handleRegister} className="space-y-5">
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Alamat Email Resmi</label>
+              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Email Address</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-3.5 h-4 w-4 text-slate-400" />
                 <input
                   type="email"
                   required
                   className="w-full pl-11 pr-4 py-3 bg-slate-50/50 border border-slate-200 focus:bg-white rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 text-sm transition-all duration-150"
-                  placeholder="nama@email.com"
+                  placeholder="name@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
-              <span className="text-[10px] text-slate-400 leading-normal block mt-1">Gunakan alamat email aktif untuk kebutuhan pengiriman surat konfirmasi status berkas berkala.</span>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Kata Sandi Baru</label>
+              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">New Password</label>
               <div className="relative">
                 <Lock className="absolute left-4 top-3.5 h-4 w-4 text-slate-400" />
                 <input
                   type="password"
                   required
                   className="w-full pl-11 pr-4 py-3 bg-slate-50/50 border border-slate-200 focus:bg-white rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 text-sm transition-all duration-150"
-                  placeholder="Minimal 8 karakter"
+                  placeholder="Minimal 8 karakter" // DIUBAH DI SINI
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
-              <span className="text-[10px] text-slate-400 leading-normal block mt-1">Sandi wajib dikonfigurasi menggunakan kombinasi karakter alfanumerik minimal sepanjang 8 digit.</span>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Konfirmasi Kata Sandi</label>
+              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Confirm Password</label>
               <div className="relative">
                 <Lock className="absolute left-4 top-3.5 h-4 w-4 text-slate-400" />
                 <input
@@ -198,7 +169,6 @@ function Register() {
                   onChange={(e) => setPasswordConfirm(e.target.value)}
                 />
               </div>
-              <span className="text-[10px] text-slate-400 leading-normal block mt-1">Ketik kembali susunan kata sandi baru secara identik untuk memvalidasi akurasi otentikasi.</span>
             </div>
 
             <div className="pt-2">
@@ -207,7 +177,7 @@ function Register() {
                 disabled={loading}
                 className="w-full bg-slate-950 hover:bg-sky-600 disabled:bg-slate-400 text-white font-semibold py-3.5 rounded-full text-xs uppercase tracking-wider transition-all duration-300 shadow-sm flex items-center justify-center gap-2"
               >
-                {loading ? 'Memproses Pendaftaran...' : 'Mendaftar Akun Baru'}
+                {loading ? 'Creating Account...' : 'Sign Up'}
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -223,7 +193,7 @@ function Register() {
       </div>
 
       <footer className="relative z-10 border-t border-slate-200 text-[11px] text-slate-400 font-medium bg-[#F5F7FB]/30">
-        <div className="max-w-4xl mx-auto px-6 py-5 text-center sm:text-left">&copy; 2026 CoreNexus Labs. All Rights Reserved.</div>
+        <div className="max-w-6xl mx-auto px-6 py-5 text-center sm:text-left">&copy; 2026 CoreNexus Labs. All Rights Reserved.</div>
       </footer>
     </div>
   );
