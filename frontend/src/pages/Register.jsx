@@ -15,8 +15,8 @@ function Register() {
   const navigate = useNavigate();
 
   /**
-   * Session route guard validation logic.
-   * Redirects authenticated assets directly to their designated routing scopes.
+   * Authentication Session Guard: Intercepts active credential objects.
+   * Auto-dispatches registered active entities away from onboarding workflows.
    */
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -29,6 +29,10 @@ function Register() {
     }
   }, [navigate]);
 
+  /**
+   * Layout Notification Life-Cycle Tracker: Destroys notice alerts
+   * automatically after the layout runtime threshold exceeds 5000ms.
+   */
   useEffect(() => {
     if (notice) {
       const timer = setTimeout(() => setNotice(null), 5000);
@@ -37,8 +41,8 @@ function Register() {
   }, [notice]);
 
   /**
-   * Account registration request controller pipeline.
-   * Validates parameter structural criteria before transmission to the system endpoint.
+   * Account Provision Controller Pipeline: Dispatches registration schemas 
+   * to authorization targets after parameters meet validation specifications.
    */
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -75,6 +79,11 @@ function Register() {
           type: "success"
         });
         
+        /**
+         * Intentional Onboarding View Latency Buffer: 2500ms Execution Delay.
+         * Holds current registration layout scope allowing the user sufficient window 
+         * to verify account creation messages before firing terminal context routing.
+         */
         setTimeout(() => {
           navigate('/login');
         }, 2500);
@@ -122,7 +131,6 @@ function Register() {
             <p className="text-slate-500 text-xs sm:text-sm leading-relaxed">Daftarkan alamat email resmi Anda untuk mulai melakukan pengisian berkas kualifikasi pendaftaran program.</p>
           </div>
 
-          {/* SINKRONISASI: Standardisasi Layout Banner Notifikasi Toast yang Konsisten */}
           {notice && (
             <div className="mb-6 animate-in fade-in slide-in-from-top-4 duration-300">
               <div className={`p-4 rounded-2xl border bg-white/90 backdrop-blur-md shadow-lg flex items-start gap-3.5 relative overflow-hidden ${
