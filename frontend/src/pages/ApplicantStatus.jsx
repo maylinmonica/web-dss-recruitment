@@ -41,7 +41,7 @@ function ApplicantStatus() {
         }
         setLoading(false);
       } catch (error) {
-        console.error("Gagal memuat data status pelamar:", error.response?.data || error.message);
+        console.error("Transmission Error:", error.response?.data || error.message);
         setLoading(false);
       }
     };
@@ -54,13 +54,17 @@ function ApplicantStatus() {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
   };
 
+  /**
+   * Generates structural step state representation based on application status flags.
+   * @returns {Object} Interface theme configuration and localized descriptive strings.
+   */
   const getNextStepState = () => {
     if (!applicantData || applicantData.status !== 'Verified') {
       return {
         bg: 'bg-slate-50 border-slate-200/60 text-slate-400',
         icon: <Clock className="w-5 h-5" />,
         title: 'Tahap Selanjutnya',
-        desc: 'Menunggu proses verifikasi dokumen oleh tim seleksi.',
+        desc: 'Menunggu proses verifikasi berkas oleh tim seleksi.',
         opacity: 'opacity-40'
       };
     }
@@ -87,7 +91,7 @@ function ApplicantStatus() {
         bg: 'bg-sky-50 border-sky-100 text-sky-600 animate-pulse',
         icon: <Clock className="w-5 h-5" />,
         title: 'Proses Evaluasi',
-        desc: 'Verifikasi dokumen selesai. Menunggu validasi jadwal dari HR Manager.',
+        desc: 'Verifikasi dokumen selesai. Menunggu konfirmasi jadwal wawancara resmi.',
         opacity: ''
       };
     }
@@ -115,7 +119,7 @@ function ApplicantStatus() {
               Pelacakan Aplikasi
             </div>
             <h2 className="text-2xl sm:text-3xl font-bold font-display text-slate-950 tracking-tight">Status Pelacakan Berkas</h2>
-            <p className="text-slate-500 text-xs sm:text-sm">Pantau kemajuan proses verifikasi kualifikasi dokumen administrasi Anda secara berkala.</p>
+            <p className="text-slate-500 text-xs sm:text-sm">Pantau kemajuan proses verifikasi berkas administrasi pendaftaran Anda secara berkala.</p>
           </div>
 
           {/* LINI MASA TIMELINE */}
@@ -128,7 +132,7 @@ function ApplicantStatus() {
               <div className="space-y-8">
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 relative">
                   
-                  {/* TAHAP 1: CREATE YOUR PROFILE */}
+                  {/* TAHAP 1 */}
                   <div className="flex items-start gap-3.5">
                     <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-sm shrink-0">
                       <CheckCircle2 className="w-5 h-5" />
@@ -139,7 +143,7 @@ function ApplicantStatus() {
                     </div>
                   </div>
 
-                  {/* TAHAP 2: SUBMIT YOUR APPLICATION */}
+                  {/* TAHAP 2 */}
                   <div className={`flex items-start gap-3.5 ${!applicantData ? 'opacity-50' : ''}`}>
                     <div className={`p-2 rounded-xl shrink-0 shadow-sm border ${
                       applicantData ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-sky-50 border-sky-100 text-sky-600 animate-pulse'
@@ -149,12 +153,12 @@ function ApplicantStatus() {
                     <div className="space-y-0.5">
                       <h4 className="font-bold text-xs uppercase tracking-wide text-slate-900">Formulir Dikirim</h4>
                       <p className="text-xs text-slate-400 leading-relaxed">
-                        {applicantData ? 'Dokumen administrasi dan portofolio Anda telah sukses diterima sistem.' : 'Menunggu pengisian data kualifikasi pada formulir pendaftaran.'}
+                        {applicantData ? 'Dokumen berkas utama Anda telah sukses diterima sistem rekrutmen.' : 'Menunggu pengisian data profil pada formulir pendaftaran magang.'}
                       </p>
                     </div>
                   </div>
 
-                  {/* TAHAP 3: APPLICATION REVIEW */}
+                  {/* TAHAP 3 */}
                   <div className={`flex items-start gap-3.5 ${applicantData?.status !== 'Verified' && !applicantData ? 'opacity-40' : ''}`}>
                     <div className={`p-2 rounded-xl shrink-0 shadow-sm border ${
                       applicantData?.status === 'Verified' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : applicantData ? 'bg-sky-50 border-sky-100 text-sky-600 animate-pulse' : 'bg-slate-50 border-slate-200/60 text-slate-400'
@@ -164,12 +168,12 @@ function ApplicantStatus() {
                     <div className="space-y-0.5">
                       <h4 className="font-bold text-xs uppercase tracking-wide text-slate-900">Validasi Dokumen</h4>
                       <p className="text-xs text-slate-400 leading-relaxed">
-                        {!applicantData ? 'Menunggu pengiriman berkas lamaran.' : applicantData.status === 'Verified' ? 'Tim Talent Acquisition telah selesai memverifikasi berkas pendaftaran.' : 'Berkas Anda berada dalam antrean peninjauan oleh tim terkait.'}
+                        {!applicantData ? 'Menunggu pengiriman berkas lamaran.' : applicantData.status === 'Verified' ? 'Tim peninjau berkas telah selesai memverifikasi data pendaftaran Anda.' : 'Berkas administrasi Anda berada dalam antrean proses validasi dokumen.'}
                       </p>
                     </div>
                   </div>
 
-                  {/* TAHAP 4: NEXT STEP */}
+                  {/* TAHAP 4 */}
                   <div className={`flex items-start gap-3.5 ${nextStep.opacity}`}>
                     <div className={`p-2 rounded-xl shrink-0 shadow-sm border ${nextStep.bg}`}>
                       {nextStep.icon}
@@ -182,33 +186,33 @@ function ApplicantStatus() {
 
                 </div>
 
-                {/* NOTIFIKASI DINAMIS */}
+                {/* NOTIFIKASI BANNER */}
                 {!applicantData ? (
                   <div className="bg-amber-50/60 border border-amber-100 rounded-2xl p-4 flex gap-3.5 items-start">
                     <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                     <p className="text-xs text-amber-900 leading-relaxed">
-                      <span className="font-bold">Tindakan Diperlukan:</span> Anda belum melengkapi berkas aplikasi. Silakan menuju menu <Link to="/apply" className="font-semibold underline text-sky-600 hover:text-sky-700">Isi Formulir</Link> untuk mengirim data kualifikasi Anda.
+                      <span className="font-bold">Tindakan Diperlukan:</span> Anda belum mengirimkan berkas pendaftaran magang. Silakan menuju menu <Link to="/apply" className="font-semibold underline text-sky-600 hover:text-sky-700">Isi Formulir</Link> untuk mengirim data dokumen Anda.
                     </p>
                   </div>
                 ) : applicantData.interviewDetails?.status === 'Scheduled' ? (
                   <div className="bg-emerald-50/70 border border-emerald-100 rounded-2xl p-4 flex gap-3.5 items-start text-emerald-950 animate-in zoom-in-95 duration-200">
                     <Award className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                     <p className="text-xs leading-relaxed">
-                      <span className="font-bold text-emerald-900">Hasil Seleksi Dokumen:</span> Berkas lamaran Anda telah <span className="font-bold">Lolos Verifikasi</span>. Jadwal wawancara resmi Anda telah diterbitkan. Silakan akses menu <Link to="/applicant/interview-schedule" className="font-bold underline text-sky-600 hover:text-sky-700">Sesi Wawancara</Link> untuk melihat detail informasi pertemuan virtual.
+                      <span className="font-bold text-emerald-900">Hasil Seleksi Administrasi:</span> Berkas berkualifikasi Anda dinyatakan <span className="font-bold">Lolos Tahap Validasi Dokumen</span>. Jadwal pelaksanaan wawancara resmi Anda telah diterbitkan. Silakan akses menu <Link to="/applicant/interview-schedule" className="font-bold underline text-sky-600 hover:text-sky-700">Sesi Wawancara</Link> untuk melihat rincian informasi pertemuan virtual.
                     </p>
                   </div>
                 ) : applicantData.interviewDetails?.status === 'Rejected' ? (
                   <div className="bg-rose-50/70 border border-rose-100 rounded-2xl p-4 flex gap-3.5 items-start text-rose-950 animate-in zoom-in-95 duration-200">
                     <XCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
                     <p className="text-xs leading-relaxed">
-                      <span className="font-bold text-rose-900">Informasi Hasil Seleksi:</span> Terima kasih telah mendaftar di CoreNexus Labs. Berdasarkan hasil evaluasi dokumen, kualifikasi Anda belum sesuai dengan kriteria yang dibutuhkan pada periode ini. Profil Anda akan tetap tersimpan dalam basis data kami untuk peluang program di masa mendatang.
+                      <span className="font-bold text-rose-900">Informasi Hasil Seleksi:</span> Terima kasih atas partisipasi Anda dalam mengajukan berkas pendaftaran magang. Berdasarkan hasil evaluasi berkas, kualifikasi Anda saat ini belum sesuai dengan kriteria posisi yang dibutuhkan perusahaan. Berkas Anda akan tetap tersimpan dalam basis data internal kami untuk peluang program di masa mendatang.
                     </p>
                   </div>
                 ) : (
                   <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 flex gap-3.5 items-start">
                     <Award className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
                     <p className="text-xs text-slate-500 leading-relaxed">
-                      <span className="font-bold text-slate-700">Status Lamaran Aktif:</span> Dokumen atas nama <span className="font-semibold text-slate-800">{applicantData.name}</span> untuk posisi <span className="font-semibold text-slate-800">{applicantData.category === 'Final Year' ? 'Mahasiswa Tingkat Akhir' : 'Lulusan Baru'}</span> telah terdaftar dan siap diproses ke tahap perangkingan evaluasi.
+                      <span className="font-bold text-slate-700">Status Aplikasi Aktif:</span> Berkas administrasi atas nama <span className="font-semibold text-slate-800">{applicantData.name}</span> untuk posisi <span className="font-semibold text-slate-800">{applicantData.category === 'Final Year' ? 'Mahasiswa Tingkat Akhir' : 'Lulusan Baru'}</span> telah terdaftar dan siap diproses ke tahap peninjauan berkas lebih lanjut.
                     </p>
                   </div>
                 )}
@@ -216,14 +220,14 @@ function ApplicantStatus() {
             )}
           </div>
 
-          {/* RINGKASAN DATA FORMULIR */}
+          {/* RINGKASAN DATA */}
           {!loading && applicantData && (
             <div className="bg-white rounded-3xl border border-slate-200/60 p-6 sm:p-8 shadow-[0_12px_40px_rgba(15,23,42,0.02)] space-y-6 animate-in fade-in duration-300">
               <div className="border-b border-slate-100 pb-3">
                 <h3 className="text-sm font-bold font-display text-slate-950 uppercase tracking-wider flex items-center gap-2">
                   <FileCheck className="w-4 h-4 text-sky-500" /> Ringkasan Dokumen Terkirim
                 </h3>
-                <p className="text-slate-400 text-xs mt-0.5">Berikut adalah salinan riwayat parameter kualifikasi administrasi Anda yang tercatat di sistem backend.</p>
+                <p className="text-slate-400 text-xs mt-0.5">Berikut adalah salinan riwayat data dokumen administrasi pendaftaran Anda yang tercatat di sistem rekrutmen pusat.</p>
               </div>
 
               {/* DATA PROFILE GRID */}
@@ -244,7 +248,9 @@ function ApplicantStatus() {
                 <div className="space-y-4">
                   <div>
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">Indeks Prestasi Kumulatif (IPK)</span>
-                    <div className="text-sm font-mono font-bold text-slate-900 mt-0.5">{applicantData.c1_gpa?.toFixed(2)} / 4.00</div>
+                    <div className="text-sm font-mono font-bold text-slate-900 mt-0.5">
+                      {applicantData.c1_gpa ? Number(applicantData.c1_gpa).toFixed(2) : '0.00'} / 4.00
+                    </div>
                   </div>
                   <div>
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">Ekspektasi Uang Saku Bulanan</span>
