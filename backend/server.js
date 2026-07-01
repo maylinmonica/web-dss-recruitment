@@ -19,7 +19,12 @@ app.use(express.json());
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/applicants', require('./routes/applicantRoutes')); 
 app.use('/api/criteria', require('./routes/criteriaRoutes'));
+
+// 🛠️ PERBAIKAN MASTER: Jalur Pengaman Ganda Penyimpanan Berkas Fisik Pelamar
+// Mencakup segala kemungkinan root directory eksekusi pada server lokal maupun Cloud Railway
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+app.use('/uploads', express.static(path.join(process.cwd(), 'backend', 'uploads')));
 
 // Rute Dasar untuk Pengujian Konektivitas Utama
 app.get('/', (req, res) => {
@@ -29,7 +34,7 @@ app.get('/', (req, res) => {
     });
 });
 
-// Konfigurasi Port Tunggal untuk Sinkronisasi Cloud & Lokal
+// Konfigurasi Port Penting untuk Sinkronisasi Cloud & Lokal
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
     console.log('===================================================');
