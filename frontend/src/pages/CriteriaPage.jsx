@@ -59,6 +59,7 @@ function CriteriaPage() {
         weights[k] = (parseFloat(v) || 0) / 100;
       });
 
+      // Data editAttributes tetap dikirimkan ke server agar tidak merusak kontrak data struktur
       const res = await axios.put(
         `${API_BASE_URL}/api/criteria/update`,
         { weights, attributes: editAttributes },
@@ -80,11 +81,20 @@ function CriteriaPage() {
     }
   };
 
+  /**
+   * Menghentikan input nilai negatif, positif eksplisit, desimal, dan notasi eksponensial.
+   * @param {React.KeyboardEvent} e 
+   */
+  const handleNumericKeyDown = (e) => {
+    if (['-', '+', 'e', 'E', '.'].includes(e.key)) {
+      e.preventDefault();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#F5F7FB] flex flex-col md:flex-row text-slate-800 font-sans antialiased relative selection:bg-sky-100 selection:text-slate-900">
       <Sidebar />
       <div className="flex-1 flex flex-col relative overflow-y-auto">
-        {/* Sistem Notifikasi Toast */}
         {notice && (
           <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 max-w-md w-full px-4 animate-in fade-in slide-in-from-top-4 duration-300">
             <div className={`p-4 rounded-2xl border bg-white/90 backdrop-blur-md shadow-lg flex items-start gap-3.5 relative overflow-hidden ${notice.type === 'success' ? 'border-emerald-100' : 'border-rose-100'}`}>
@@ -103,12 +113,12 @@ function CriteriaPage() {
           <div className="space-y-1">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-100 uppercase tracking-wide">Pengaturan Kriteria</div>
             <h2 className="text-2xl sm:text-3xl font-bold font-display text-slate-950 tracking-tight">Konfigurasi Bobot Kriteria</h2>
-            <p className="text-slate-500 text-xs sm:text-sm">Menentukan persentase bobot kepentingan kriteria. Total alokasi seluruh kriteria wajib berjumlah 100%.</p>
+            <p className="text-slate-500 text-xs sm:text-sm">Menentukan persentase bobot kepentingan kriteria. Total alokasi seluruh kriteria wajib berjullan 100%.</p>
           </div>
 
           <div className="bg-white rounded-3xl border border-slate-200/60 shadow-[0_12px_40px_rgba(15,23,42,0.02)] p-6 space-y-6">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center gap-2"><Sliders className="w-4 h-4 text-slate-400" /> Parameter Matriks Perangkingan</h3>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center gap-2"><Sliders className="w-4 h-4 text-slate-400" /> Parameter Kriteria Penilaian</h3>
               <span className={`px-3 py-1 text-xs font-mono font-bold rounded-xl border ${Math.abs(totalPercent - 100) < 0.01 ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'}`}>Total Input: {totalPercent.toFixed(0)}% / 100%</span>
             </div>
 
@@ -116,18 +126,22 @@ function CriteriaPage() {
               {Object.keys(CRITERIA_LABELS).map((key) => (
                 <div key={key} className="p-4 bg-slate-50/60 border border-slate-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="space-y-0.5">
-                    {/* PERBAIKAN: Kode teknis mentah C1, C2, dll. sudah dihilangkan sepenuhnya */}
                     <h4 className="text-sm font-semibold text-slate-900">{CRITERIA_LABELS[key]}</h4>
                   </div>
-                  <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto justify-between sm:justify-end">
+                  <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto justify-end">
                     <div className="flex items-center gap-2">
-                      <input type="number" min="0" max="100" value={editWeights[key] ?? ''} onChange={(e) => setEditWeights(w => ({ ...w, [key]: e.target.value }))} className="w-20 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-sky-500" placeholder="0" />
+                      <input 
+                        type="number" 
+                        min="0" 
+                        max="100" 
+                        onKeyDown={handleNumericKeyDown}
+                        value={editWeights[key] ?? ''} 
+                        onChange={(e) => setEditWeights(w => ({ ...w, [key]: e.target.value }))} 
+                        className="w-20 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-sky-500" 
+                        placeholder="0" 
+                      />
                       <span className="text-xs text-slate-400 font-semibold">%</span>
                     </div>
-                    <select value={editAttributes[key] ?? 'benefit'} onChange={(e) => setEditAttributes(a => ({ ...a, [key]: e.target.value }))} className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-sky-500">
-                      <option value="benefit">Benefit (Kualifikasi tinggi menguntungkan)</option>
-                      <option value="cost">Cost (Kompensasi rendah menguntungkan)</option>
-                    </select>
                   </div>
                 </div>
               ))}
@@ -135,7 +149,6 @@ function CriteriaPage() {
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-100 bg-white">
               <div className="flex items-center gap-2 text-slate-400 text-xs"><Info className="w-4 h-4 text-slate-400 shrink-0" /><span>Tombol simpan akan aktif jika alokasi nilai seluruh kriteria tepat bernilai 100%.</span></div>
-              {/* PERBAIKAN: Tombol simpan diubah dari Hitam Pekat menjadi Biru Brand Premium */}
               <button onClick={handleSaveCriteria} disabled={savingConfig || Math.abs(totalPercent - 100) > 0.01} className="w-full sm:w-auto px-5 py-2.5 bg-sky-600 hover:bg-sky-700 disabled:bg-slate-300 text-white rounded-full text-xs font-bold uppercase tracking-wide transition-all shadow-sm">{savingConfig ? 'Menyimpan...' : 'Simpan Perubahan'}</button>
             </div>
           </div>
