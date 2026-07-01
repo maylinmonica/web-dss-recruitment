@@ -92,11 +92,21 @@ function Apply() {
   };
 
   /**
-   * Menghentikan input karakter non-angka positif murni pada element input bertipe number.
-   * Mencegah bug angka minus (-), plus (+), dan karakter eksponensial (e).
+   * Prevents non-numeric and negative characters for decimal fields (GPA).
+   * @param {React.KeyboardEvent} e 
    */
-  const handleNumericKeyDown = (e) => {
+  const handleGpaKeyDown = (e) => {
     if (['-', '+', 'e', 'E'].includes(e.key)) {
+      e.preventDefault();
+    }
+  };
+
+  /**
+   * Prevents non-numeric, negative, and decimal characters for integer fields (Salary).
+   * @param {React.KeyboardEvent} e 
+   */
+  const handleSalaryKeyDown = (e) => {
+    if (['-', '+', 'e', 'E', '.'].includes(e.key)) {
       e.preventDefault();
     }
   };
@@ -106,24 +116,23 @@ function Apply() {
     setLoading(true);
     setNotice(null);
 
-    // Validasi kisaran angka IPK/GPA secara programmatikal
     const parsedGpa = parseFloat(gpa);
     if (isNaN(parsedGpa) || parsedGpa < 0 || parsedGpa > 4.00) {
       setNotice({
-        title: "Validasi IPK Gagal",
-        description: "Nilai IPK tidak valid. Batas rentang pengisian adalah 0.00 hingga 4.00.",
+        title: "Validasi Gagal",
+        description: "Format Nilai IPK tidak sesuai ketentuan skala 0.00 - 4.00.",
         type: "warning"
       });
       setLoading(false);
       return;
     }
 
-    // Penanganan konversi presisi data finansial untuk menghindari manipulasi string regex backend
+    // Direct base-10 conversion to eliminate IEEE 754 precision rounding issues
     const parsedSalary = parseInt(salary, 10);
     if (isNaN(parsedSalary) || parsedSalary <= 0) {
       setNotice({
-        title: "Validasi Kompensasi Gagal",
-        description: "Nominal uang saku harus berupa angka bulat positif.",
+        title: "Validasi Gagal",
+        description: "Nominal kompensasi harus berupa angka bulat positif murni.",
         type: "warning"
       });
       setLoading(false);
@@ -132,8 +141,8 @@ function Apply() {
 
     if (parsedSalary > 99999999) {
       setNotice({
-        title: "Nominal Pengajuan Melebihi Batas",
-        description: "Batas pengisian nominal uang saku bulanan maksimal adalah Rp99.999.999.",
+        title: "Batas Maksimal Terlampaui",
+        description: "Nilai pengisian nominal kompensasi bulanan melebihi batas sistem.",
         type: "warning"
       });
       setLoading(false);
@@ -177,7 +186,7 @@ function Apply() {
       if (response.data.status === 'Success') {
         setNotice(response.data.ui_notice || {
           title: "Pendaftaran Berhasil",
-          description: "Seluruh berkas administrasi Anda sukses disimpan ke sistem pusat.",
+          description: "Seluruh berkas kelayakan administrasi Anda telah aman tersimpan.",
           type: "success"
         });
         setName(''); setGpa(''); setSalary(''); setPortfolioUrl('');
@@ -186,8 +195,8 @@ function Apply() {
       }
     } catch (error) {
       setNotice(error.response?.data?.ui_notice || {
-        title: "Gagal Mengirimkan Formulir",
-        description: "Terjadi gangguan koneksi menuju server database rekrutmen.",
+        title: "Gagal Mengirimkan Berkas",
+        description: "Terjadi kendala transmisi data menuju jaringan server rekrutmen.",
         type: "error"
       });
     } finally {
@@ -234,14 +243,14 @@ function Apply() {
           <div className="bg-white rounded-3xl border border-slate-200/60 p-6 sm:p-8 shadow-[0_12px_40px_rgba(15,23,42,0.02)]">
             <form onSubmit={handleApply} className="space-y-10">
               
-              {/* SUB-SEKSI 1: PROFIL */}
+              {/* SEKSI 1: PROFIL */}
               <div className="space-y-4">
                 <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-2 flex items-center gap-2"><User className="w-3.5 h-3.5" /> Profil Utama Pelamar</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600">Nama Lengkap Sesuai Identitas <span className="text-rose-500 text-xs">(Wajib)</span></label>
                     <input type="text" required className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 focus:bg-white rounded-xl text-sm transition-all focus:outline-none focus:border-sky-500" placeholder="Contoh: Maylin Monica" value={name} onChange={(e) => setName(e.target.value)} />
-                    <span className="text-[10px] text-slate-400 leading-normal block mt-1">Gunakan nama lengkap tanpa gelar atau singkatan untuk sinkronisasi dokumen database.</span>
+                    <span className="text-[10px] text-slate-400 leading-normal block mt-1">Masukkan nama lengkap tanpa singkatan untuk mempermudah proses verifikasi identitas berkas lamaran.</span>
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600">Status Pendidikan Saat Ini <span className="text-rose-500 text-xs">(Wajib)</span></label>
@@ -249,12 +258,12 @@ function Apply() {
                       <option value="Final Year">Mahasiswa Tingkat Akhir (Min. Semester 6)</option>
                       <option value="Fresh Graduate">Lulusan Baru (Maks. Kelulusan 1 Tahun)</option>
                     </select>
-                    <span className="text-[10px] text-slate-400 leading-normal block mt-1">Kategori ini menentukan pembagian rumpun perangkingan pada matriks keputusan TOPSIS.</span>
+                    <span className="text-[10px] text-slate-400 leading-normal block mt-1">Klasifikasi jenjang akademis saat ini disesuaikan dengan fokus pembagian kriteria kelompok lowongan aktif.</span>
                   </div>
                 </div>
               </div>
 
-              {/* SPESIFIKASI KEAHLIAN */}
+              {/* SEKSI 2: KEAHLIAN */}
               <div className="space-y-4 border-t border-slate-100 pt-6">
                 <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2"><Briefcase className="w-3.5 h-3.5" /> Fokus Penguasaan Teknologi &amp; Rumpun Keahlian</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -265,14 +274,14 @@ function Apply() {
                       {skillPresets.map((s, idx) => <option key={idx} value={s}>{s}</option>)}
                       <option value="Lainnya">Keahlian Lainnya...</option>
                     </select>
-                    <span className="text-[10px] text-slate-400 leading-normal block mt-1">Dapat memilih lebih dari satu core tech stack pendukung kualifikasi kriteria internal.</span>
+                    <span className="text-[10px] text-slate-400 leading-normal block mt-1">Pilih rumpun keahlian pemrograman utama yang paling dikuasai sebagai indikator evaluasi kompetensi teknis.</span>
                   </div>
                   <div className="space-y-1.5">
                     {showCustomInput && (
                       <div className="animate-in fade-in slide-in-from-top-2 duration-200">
                         <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600">Sebutkan Keahlian Khusus <span className="text-slate-400 font-normal lowercase">(Tekan Enter)</span></label>
                         <input type="text" value={customSkill} placeholder="Ketik keahlian lalu tekan Enter" onKeyDown={handleAddCustomSkill} onChange={(e) => setCustomSkill(e.target.value)} className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 focus:bg-white rounded-xl text-sm focus:outline-none focus:border-sky-500" />
-                        <span className="text-[10px] text-slate-400 leading-normal block mt-1">Masukkan satu keahlian spesifik tambahan, lalu tekan tombol Enter pada keyboard.</span>
+                        <span className="text-[10px] text-slate-400 leading-normal block mt-1">Gunakan tombol Enter setelah mengetik satu keahlian tambahan untuk memasukkannya ke dalam daftar.</span>
                       </div>
                     )}
                   </div>
@@ -290,7 +299,7 @@ function Apply() {
                 )}
               </div>
 
-              {/* KUALIFIKASI ANGKA */}
+              {/* SEKSI 3: KUALIFIKASI ANGKA */}
               <div className="space-y-4 border-t border-slate-100 pt-6">
                 <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2"><Award className="w-3.5 h-3.5" /> Capaian Akademis &amp; Ekspektasi Finansial</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -301,33 +310,34 @@ function Apply() {
                       step="0.01" 
                       min="0.00"
                       max="4.00"
-                      onKeyDown={handleNumericKeyDown}
+                      onKeyDown={handleGpaKeyDown}
                       required 
                       className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 focus:bg-white rounded-xl text-sm focus:outline-none focus:border-sky-500" 
                       placeholder="Contoh: 3.85" 
                       value={gpa} 
                       onChange={(e) => setGpa(e.target.value)} 
                     />
-                    <span className="text-[10px] text-slate-400 leading-normal block mt-1">Batas skala penilaian IPK nasional menggunakan rentang numerik positif antara 0.00 hingga 4.00.</span>
+                    <span className="text-[10px] text-slate-400 leading-normal block mt-1">Gunakan format desimal positif dengan rentang minimum 0.00 hingga batas maksimum skala nilai 4.00.</span>
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600">Ekspektasi Uang Saku Bulanan <span className="text-rose-500 text-xs">(Wajib)</span></label>
                     <input 
                       type="number" 
                       min="0"
-                      onKeyDown={handleNumericKeyDown}
+                      max="99999999"
+                      onKeyDown={handleSalaryKeyDown}
                       required 
                       className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 focus:bg-white rounded-xl text-sm mb-0.5 focus:outline-none focus:border-sky-500" 
                       placeholder="Contoh: 3500000" 
                       value={salary} 
                       onChange={(e) => setSalary(e.target.value)} 
                     />
-                    <span className="text-[10px] text-slate-400 leading-normal block mt-1">Batas maksimal nominal pengajuan adalah Rp99.999.999. Input wajib angka bulat tanpa titik/koma.</span>
+                    <span className="text-[10px] text-slate-400 leading-normal block mt-1">Masukkan nilai nominal angka bulat positif utuh (Maks. Rp99.999.999) tanpa menyertakan tanda titik atau koma.</span>
                   </div>
                 </div>
               </div>
 
-              {/* DOKUMEN WAJIB */}
+              {/* SEKSI 4: BERKAS */}
               <div className="space-y-4 border-t border-slate-100 pt-6">
                 <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2"><FileText className="w-3.5 h-3.5" /> Berkas Dokumen Wajib &amp; Portofolio</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -352,7 +362,7 @@ function Apply() {
                         <button type="button" onClick={(e) => { e.stopPropagation(); setCvFile(null); }} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors ml-2 flex-shrink-0"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     )}
-                    <span className="text-[10px] text-slate-400 leading-normal block mt-1">Pastikan berkas riwayat hidup komprehensif dan tidak dalam kondisi terenkripsi password.</span>
+                    <span className="text-[10px] text-slate-400 leading-normal block mt-1">Unggah dokumen riwayat hidup komprehensif terbaru dalam ekstensi .pdf tanpa proteksi kata sandi.</span>
                   </div>
 
                   <div className="space-y-1.5">
@@ -375,7 +385,7 @@ function Apply() {
                         <button type="button" onClick={(e) => { e.stopPropagation(); setTranscriptFile(null); }} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors ml-2 flex-shrink-0"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     )}
-                    <span className="text-[10px] text-slate-400 leading-normal block mt-1">Unggah transkrip nilai resmi atau kumpulan KHS kumulatif untuk dicocokkan dengan input data IPK.</span>
+                    <span className="text-[10px] text-slate-400 leading-normal block mt-1">Unggah berkas pembaruan nilai akademik kumulatif resmi terakhir untuk kebutuhan proses verifikasi berkas.</span>
                   </div>
 
                 </div>
@@ -386,14 +396,14 @@ function Apply() {
                     <Link2 className="absolute left-4 top-3.5 h-4 w-4 text-slate-400" />
                     <input type="url" required className="w-full pl-11 pr-4 py-3 bg-slate-50/50 border border-slate-200 focus:bg-white rounded-xl text-sm focus:outline-none focus:border-sky-500" placeholder="Contoh: https://github.com/username" value={portfolioUrl} onChange={(e) => setPortfolioUrl(e.target.value)} />
                   </div>
-                  <span className="text-[10px] text-slate-400 leading-normal block mt-1">Tautan repositori publik wajib aktif untuk penilaian kriteria kompleksitas proyek kode pemrograman.</span>
+                  <span className="text-[10px] text-slate-400 leading-normal block mt-1">Sertakan tautan alamat URL repositori publik yang aktif sebagai pembuktian portofolio rekayasa kode.</span>
                 </div>
               </div>
 
-              {/* DOKUMEN OPSIONAL */}
+              {/* SEKSI 5: SERTIFIKASI (OPSIONAL) */}
               <div className="space-y-4 border-t border-slate-100 pt-6">
                 <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                  <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2"><Briefcase className="w-3.5 h-3.5" /> Sertifikasi &amp; Piagam Penghargaan <span className="text-slate-400 font-sans font-medium lowercase text-xs">(Opsional / Nilai Tambah)</span></h3>
+                  <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2"><Briefcase className="w-3.5 h-3.5" /> Sertifikasi Kompetensi Tambahan <span className="text-slate-400 font-sans font-medium lowercase text-xs">(Opsional / Nilai Tambah)</span></h3>
                   <button type="button" onClick={addCertRow} className="text-[10px] font-bold text-sky-600 bg-sky-50 hover:bg-sky-100 px-2.5 py-1 rounded-lg uppercase transition-colors">Tambah Sertifikat</button>
                 </div>
                 {certs.map((cert) => (
@@ -433,10 +443,10 @@ function Apply() {
                     </div>
                   </div>
                 ))}
-                <span className="text-[10px] text-slate-400 leading-normal block mt-1">Lampiran sertifikasi eksternal valid akan dikonversi menjadi poin kualitatif pembobotan C5 oleh tim TA.</span>
+                <span className="text-[10px] text-slate-400 leading-normal block mt-1">Lampiran bukti sertifikasi profesi atau keahlian yang relevan untuk memperkuat validasi kompetensi keahlian teknis pelamar.</span>
               </div>
 
-              {/* PRESTASI */}
+              {/* SEKSI 6: PRESTASI (OPSIONAL) */}
               <div className="space-y-4 border-t border-slate-100 pt-6">
                 <div className="flex justify-between items-center border-b border-slate-100 pb-2">
                   <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2"><Award className="w-3.5 h-3.5" /> Piagam Penghargaan &amp; Juara Kompetisi <span className="text-slate-400 font-sans font-medium lowercase text-xs">(Opsional / Nilai Tambah)</span></h3>
@@ -479,7 +489,7 @@ function Apply() {
                     </div>
                   </div>
                 ))}
-                <span className="text-[10px] text-slate-400 leading-normal block mt-1">Lampiran piagam juara nasional/internasional yang valid akan mendongkrak akumulasi skor kriteria C4.</span>
+                <span className="text-[10px] text-slate-400 leading-normal block mt-1">Sertakan bukti piagam pencapaian kompetisi akademik maupun non-akademik sebagai berkas pendukung proses kualifikasi berkas administrasi.</span>
               </div>
 
               <div className="pt-2">
