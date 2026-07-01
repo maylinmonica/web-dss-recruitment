@@ -1,10 +1,7 @@
 const { pool } = require('../db');
-const { readCriteria } = require('../dataStore');
+const { readCriteria } = require('../dataStore'); // Kriteria bobot tetap aman di json
 
-/**
- * Data Transformation Layer: Maps relational PostgreSQL snake_case rows
- * into standardized camelCase objects compliant with application processing layers.
- */
+// HELPER MAPPER: Mengubah baris snake_case PostgreSQL menjadi camelCase standarisasi Frontend & TOPSIS
 const mapRowToApplicant = (row) => {
     if (!row) return null;
     return {
@@ -29,9 +26,7 @@ const mapRowToApplicant = (row) => {
     };
 };
 
-/**
- * Request Handler: Ingests, validates, and persists incoming applicant registration dossiers.
- */
+// 1. ENDPOINT: Mengirimkan Formulir Lamaran Baru (Pelamar)
 exports.submitApplication = async (req, res) => {
     try {
         const { name, category, c1_gpa, c6_salary, portfolioUrl } = req.body;
@@ -69,7 +64,7 @@ exports.submitApplication = async (req, res) => {
             });
         }
 
-        // Database Constraints Validation: Check for existing candidate records to prevent resource duplication
+        // SQL: Cek data pendaftaran duplikat
         const checkResult = await pool.query('SELECT * FROM applicants WHERE LOWER(email) = LOWER($1)', [emailPelamar]);
         if (checkResult.rows.length > 0) {
             return res.status(400).json({
@@ -103,7 +98,7 @@ exports.submitApplication = async (req, res) => {
             rescheduleRequest: null
         };
 
-        // Persistence Routine: Insert verified payload data parameters into the relational schema
+        // SQL: Simpan formulir baru ke database PostgreSQL
         const insertQuery = `
             INSERT INTO applicants (
                 email, name, category, c1_gpa, c2_portfolio, c3_experience, c4_merits, c5_skills, c6_salary,
@@ -135,9 +130,7 @@ exports.submitApplication = async (req, res) => {
     }
 };
 
-/**
- * Request Handler: Commits verified assessment score matrices to candidate records.
- */
+// 2. ENDPOINT: Input Skor Rubrik Kualitatif 1-5 (Talent Acquisition)
 exports.verifyApplicantScores = async (req, res) => {
     const { id } = req.params;
     const { c2_portfolio, c3_experience, c4_merits } = req.body;
@@ -162,9 +155,7 @@ exports.verifyApplicantScores = async (req, res) => {
     }
 };
 
-/**
- * Request Handler: Commits structural interview appointment states and coordinates.
- */
+// 3. ENDPOINT: Keputusan Penjadwalan Wawancara Final (HR Manager)
 exports.setInterviewDecision = async (req, res) => {
     const { id } = req.params;
     const { decision, date, time, link } = req.body; 
@@ -203,9 +194,7 @@ exports.setInterviewDecision = async (req, res) => {
     }
 };
 
-/**
- * Request Handler: Appends interview calendar schedule displacement request payload parameters.
- */
+// 4. ENDPOINT: Pengajuan Perubahan Jadwal Wawancara (Pelamar)
 exports.requestReschedule = async (req, res) => {
     const emailPelamar = req.user?.email || "";
     const { reason } = req.body;
@@ -235,10 +224,7 @@ exports.requestReschedule = async (req, res) => {
     }
 };
 
-/**
- * Computation Pipeline: Orchestrates vector normalization and calculates multi-criteria
- * proximity matrices for applicant profiles using target decision criteria models.
- */
+// 5. ENGINE KOMPUTASI MATRIKS TOPSIS
 exports.getPerankingan = async (req, res) => {
     const { category } = req.query;
 
@@ -345,7 +331,7 @@ exports.getPerankingan = async (req, res) => {
 
         const labelKategori = category === 'All' ? 'Semua Kategori' : category;
 
-        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
 
         return res.status(200).json({
             status: "Success",
@@ -357,9 +343,7 @@ exports.getPerankingan = async (req, res) => {
     }
 };
 
-/**
- * Request Handler: Resolves a complete collection listing of candidate entities.
- */
+// 6. ENDPOINT: List Semua Pelamar
 exports.getAllApplicants = async (req, res) => {
     try {
         const { status } = req.query;
@@ -379,9 +363,7 @@ exports.getAllApplicants = async (req, res) => {
     }
 };
 
-/**
- * Request Handler: Resolves a singular candidate structural dossier by primary database identity index.
- */
+// 7. ENDPOINT: Detail Satu Pelamar Berdasarkan ID
 exports.getApplicantById = async (req, res) => {
     const { id } = req.params;
     try {
@@ -397,9 +379,7 @@ exports.getApplicantById = async (req, res) => {
     }
 };
 
-/**
- * Request Handler: Resolves session context tokens to retrieve specific localized data sets.
- */
+// 8. ENDPOINT: Ambil Data Pribadi Berdasarkan Token Login Pelamar
 exports.getMyApplication = async (req, res) => {
     const emailPelamar = req.user?.email || "";
     try {
