@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { Lock, Mail, AlertTriangle, CheckCircle, Cpu, ArrowRight } from 'lucide-react';
+import { Lock, Mail, AlertTriangle, CheckCircle2, Cpu, ArrowRight } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
@@ -13,12 +13,14 @@ function Login() {
 
   const navigate = useNavigate();
 
-  // CLEAN ROUTE GUARD: Memastikan validasi dilakukan hanya jika data benar-benar konsisten
+  /**
+   * Session route guard validation logic.
+   * Redirects authenticated assets directly to their designated routing scopes.
+   */
   useEffect(() => {
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('userRole');
 
-    // Hanya lakukan redirect jika token DAN role valid serta utuh di storage
     if (token && role) {
       if (role === 'Applicant') {
         navigate('/apply'); 
@@ -30,6 +32,17 @@ function Login() {
     }
   }, [navigate]);
 
+  useEffect(() => {
+    if (notice) {
+      const timer = setTimeout(() => setNotice(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [notice]);
+
+  /**
+   * Authentication request controller pipeline.
+   * Handles security token provisions and user descriptor allocation.
+   */
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -42,19 +55,16 @@ function Login() {
       });
 
       if (response.data.status === 'Success') {
-        // STEP 1: Amankan data ke dalam storage terlebih dahulu
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('userRole', response.data.user.role);
         localStorage.setItem('userEmail', response.data.user.email);
 
-        // STEP 2: Tampilkan notice UX sukses yang bersahabat
         setNotice(response.data.ui_notice || {
           title: "Akses Diberikan",
-          description: "Otentikasi berhasil, mengalihkan menuju ruang kerja Anda...",
+          description: "Otentikasi berhasil. Mengalihkan menuju ruang kerja Anda...",
           type: "success"
         });
 
-        // STEP 3: Berikan jeda waktu render yang mulus sebelum navigasi berpindah
         setTimeout(() => {
           const targetRole = response.data.user.role;
           if (targetRole === 'Applicant') navigate('/apply'); 
@@ -63,15 +73,15 @@ function Login() {
         }, 1200);
       }
     } catch (error) {
-      // Jika login gagal akibat token usang di backend, bersihkan local storage saat itu juga
       localStorage.clear();
       
       if (error.response?.data?.ui_notice) {
         setNotice(error.response.data.ui_notice);
       } else {
+        // 🛠️ PERBAIKAN: Menghapus kebocoran port sistem internal '5001' & 'backend' demi kepatuhan keamanan korporat
         setNotice({
           title: 'Koneksi Terhambat',
-          description: 'Gagal mendapatkan respons dari server pusat. Pastikan layanan backend port 5001 aktif.',
+          description: 'Gagal mendapatkan respons dari sistem pusat. Silakan periksa status koneksi jaringan Anda.',
           type: 'error',
         });
       }
@@ -107,27 +117,28 @@ function Login() {
         <div className="w-full max-w-md bg-white rounded-3xl border border-slate-200/60 p-8 sm:p-10 shadow-[0_20px_50px_rgba(15,23,42,0.03)]">
           <div className="space-y-2 mb-8">
             <h2 className="text-3xl font-bold font-display text-slate-950 tracking-tight">
-              Welcome back
+              Selamat Datang
             </h2>
             <p className="text-slate-500 text-xs sm:text-sm leading-relaxed">
-              Silakan masuk ke akun Anda untuk mengakses dashboard dan memantau perkembangan program.
+              Silakan masuk kredensial akun Anda untuk mengakses dashboard dan memantau perkembangan program rekrutmen.
             </p>
           </div>
 
+          {/* SINKRONISASI: Standardisasi Layout Banner Notifikasi Toast yang Konsisten */}
           {notice && (
-            <div className={`mb-6 p-4 rounded-xl flex items-start gap-3 border animate-in fade-in slide-in-from-top-2 duration-200 ${
-              notice.type === 'success' ? 'bg-emerald-50/60 border-emerald-100 text-emerald-900' :
-              notice.type === 'warning' ? 'bg-amber-50/60 border-amber-100 text-amber-900' :
-              'bg-rose-50/60 border-rose-100 text-rose-900'
-            }`}>
-              <div className="mt-0.5 shrink-0">
-                {notice.type === 'success' && <CheckCircle className="w-4 h-4 text-emerald-600" />}
-                {notice.type === 'warning' && <AlertTriangle className="w-4 h-4 text-amber-600" />}
-                {notice.type === 'error' && <AlertTriangle className="w-4 h-4 text-rose-600" />}
-              </div>
-              <div className="space-y-0.5">
-                <h4 className="font-bold text-xs uppercase tracking-wide">{notice.title}</h4>
-                <p className="text-xs opacity-90 leading-relaxed">{notice.description}</p>
+            <div className="mb-6 animate-in fade-in slide-in-from-top-4 duration-300">
+              <div className={`p-4 rounded-2xl border bg-white/90 backdrop-blur-md shadow-lg flex items-start gap-3.5 relative overflow-hidden ${
+                notice.type === 'success' ? 'border-emerald-100' : 'border-rose-100'
+              }`}>
+                <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${notice.type === 'success' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                <div className="shrink-0 pl-1">
+                  {notice.type === 'success' ? <CheckCircle2 className="w-5 h-5 text-emerald-600" /> : <AlertTriangle className="w-5 h-5 text-rose-600" />}
+                </div>
+                <div className="flex-1 space-y-0.5 pr-4">
+                  <h4 className="font-bold text-xs uppercase tracking-wider text-slate-900">{notice.title}</h4>
+                  <p className="text-xs text-slate-500 leading-relaxed">{notice.description}</p>
+                </div>
+                <button type="button" onClick={() => setNotice(null)} className="text-slate-400 hover:text-slate-600 absolute right-3 top-3"><X className="w-4 h-4" /></button>
               </div>
             </div>
           )}
@@ -135,7 +146,7 @@ function Login() {
           <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-1.5">
               <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Email Address
+                Alamat Email Resmi
               </label>
               <div className="relative">
                 <Mail className="absolute left-4 top-3.5 h-4 w-4 text-slate-400" />
@@ -143,7 +154,7 @@ function Login() {
                   type="email"
                   required
                   className="w-full pl-11 pr-4 py-3 bg-slate-50/50 border border-slate-200 focus:bg-white rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 text-sm transition-all duration-150"
-                  placeholder="name@email.com"
+                  placeholder="nama@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
@@ -152,7 +163,7 @@ function Login() {
 
             <div className="space-y-1.5">
               <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Password
+                Kata Sandi Akun
               </label>
               <div className="relative">
                 <Lock className="absolute left-4 top-3.5 h-4 w-4 text-slate-400" />
@@ -173,7 +184,7 @@ function Login() {
                 disabled={loading}
                 className="w-full bg-slate-950 hover:bg-sky-600 disabled:bg-slate-400 text-white font-semibold py-3.5 rounded-full text-xs uppercase tracking-wider transition-all duration-300 shadow-sm flex items-center justify-center gap-2"
               >
-                {loading ? 'Processing...' : 'Sign In'}
+                {loading ? 'Memproses Otentikasi...' : 'Masuk Sesi Kerja'}
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
