@@ -1,19 +1,23 @@
 const fs = require('fs');
 const path = require('path');
 
-// Menentukan jalur lokasi penyimpanan berkas JSON fisik
+// Absolute filesystem routing paths for JSON transaction logs
 const applicantsFilePath = path.join(__dirname, 'applicants.json');
 const criteriaFilePath = path.join(__dirname, 'criteria.json');
 const usersFilePath = path.join(__dirname, 'users.json');
 
-// 1. DATA SEEDING USER INTERNAL & AKUN PELAMAR SIMULASI [cite: 50]
+/**
+ * Structural Data Seeding Array: System default user profiles and access roles mapping.
+ */
 const defaultUsers = [
     { email: 'ta@perusahaan.com', password: 'passwordTA2026', role: 'Talent Acquisition' },
     { email: 'manager@perusahaan.com', password: 'passwordManager2026', role: 'HR Manager' },
     { email: 'maylinthelaw@gmail.com', password: 'password123', role: 'Applicant' }
 ];
 
-// 2. DATA SEEDING 8 PELAMAR TERSTANDARISASI 6 KRITERIA (C1 - C6) [cite: 4, 21, 22]
+/**
+ * Structural Data Seeding Array: Standardized baseline applicants populated with criteria values.
+ */
 const defaultApplicants = [
     { id: "1", email: "maylinthelaw@gmail.com", name: "Maylin June", category: "Final Year", c1_gpa: 3.90, c2_portfolio: 5, c3_experience: 4, c4_merits: 5, c5_skills: 5, c6_salary: 3500000, status: "Verified" },
     { id: "2", email: "topan@gmail.com", name: "Topan Aditya", category: "Final Year", c1_gpa: 3.45, c2_portfolio: 4, c3_experience: 3, c4_merits: 2, c5_skills: 4, c6_salary: 4000000, status: "Verified" },
@@ -25,15 +29,17 @@ const defaultApplicants = [
     { id: "8", email: "hendra@gmail.com", name: "Hendra Wijaya", category: "Fresh Graduate", c1_gpa: 3.40, c2_portfolio: 2, c3_experience: 5, c4_merits: 1, c5_skills: 4, c6_salary: 4200000, status: "Verified" }
 ];
 
-// 3. DATA SEEDING UPDATE CONFIG BOBOT & ATRIBUT BARU (TOTAL PAS 1.0 / 100%) [cite: 18, 22]
+/**
+ * Structural Model Rules Seed: Active evaluation matrix default criteria parameterizations.
+ */
 const defaultCriteria = {
     weights: { c1: 0.15, c2: 0.30, c3: 0.10, c4: 0.10, c5: 0.25, c6: 0.10 },
     attributes: { c1: "benefit", c2: "benefit", c3: "benefit", c4: "benefit", c5: "benefit", c6: "cost" }
 };
 
-// --- FUNGSI MANAJEMEN DATA BERKAS FISIK JSON ---
-
-// Fungsi untuk Akun Pengguna
+/**
+ * File Subsystem Controller: Synchronizes local users file storage array.
+ */
 const readUsers = () => {
     if (!fs.existsSync(usersFilePath)) {
         fs.writeFileSync(usersFilePath, JSON.stringify(defaultUsers, null, 2), 'utf-8');
@@ -46,7 +52,9 @@ const saveUsers = (data) => {
     fs.writeFileSync(usersFilePath, JSON.stringify(data, null, 2), 'utf-8');
 };
 
-// Fungsi untuk Pelamar (Alternatif)
+/**
+ * File Subsystem Controller: Synchronizes flat files record arrays tracking candidate applications.
+ */
 const readApplicants = () => {
     if (!fs.existsSync(applicantsFilePath)) {
         fs.writeFileSync(applicantsFilePath, JSON.stringify(defaultApplicants, null, 2), 'utf-8');
@@ -59,7 +67,9 @@ const saveApplicants = (data) => {
     fs.writeFileSync(applicantsFilePath, JSON.stringify(data, null, 2), 'utf-8');
 };
 
-// Fungsi untuk Konfigurasi Kriteria Metode TOPSIS [cite: 5]
+/**
+ * File Subsystem Controller: Ingests and persists criteria configurations maps.
+ */
 const readCriteria = () => {
     if (!fs.existsSync(criteriaFilePath)) {
         fs.writeFileSync(criteriaFilePath, JSON.stringify(defaultCriteria, null, 2), 'utf-8');

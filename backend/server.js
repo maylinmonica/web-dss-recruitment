@@ -12,19 +12,28 @@ const app = express();
 
 initDatabase();
 
-// Konfigurasi Middleware Global
+/**
+ * Global Middleware Configurations:
+ * Enables Cross-Origin Resource Sharing (CORS) and registers JSON payload parsers.
+ */
 app.use(cors());
 app.use(express.json());
 
-// Registrasi Jalur Endpoint API Modular
+/**
+ * API Modular Routes Registration Framework
+ */
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/applicants', require('./routes/applicantRoutes')); 
 app.use('/api/criteria', require('./routes/criteriaRoutes'));
 
+/**
+ * File Retrieval Subsystem: 
+ * Scans multi-layered filesystem structural paths to resolve static file requests dynamically.
+ */
 app.get('/uploads/:filename', (req, res) => {
     const filename = req.params.filename;
     
-    // Daftar semua kemungkinan lokasi folder uploads pembentuk monorepo di lokal maupun cloud
+    // Matrix of potential localized storage paths across diverse deployment and environment layers
     const possiblePaths = [
         path.join(__dirname, 'uploads', filename),
         path.join(__dirname, 'Uploads', filename),
@@ -38,7 +47,6 @@ app.get('/uploads/:filename', (req, res) => {
         path.join(__dirname, 'src', 'uploads', filename)
     ];
 
-    
     for (const filePath of possiblePaths) {
         if (fs.existsSync(filePath)) {
             console.log(`🎯 Radar Berhasil! Berkas ditemukan dan dikirim dari: ${filePath}`);
@@ -46,12 +54,14 @@ app.get('/uploads/:filename', (req, res) => {
         }
     }
 
-    // Jika benar-benar tidak ditemukan di folder manapun setelah dipindai
+    // Exception Routine: Triggered when file assets are unresolved across all directory layers
     console.error(`❌ Radar Gagal: File ${filename} tidak ditemukan di lokasi server manapun.`);
     return res.status(404).send(`Cannot GET /uploads/${filename}`);
 });
 
-// Rute Dasar untuk Pengujian Konektivitas Utama
+/**
+ * Baseline Route: Primary connection state validation endpoint.
+ */
 app.get('/', (req, res) => {
     res.json({ 
         status: "Success",
@@ -59,7 +69,9 @@ app.get('/', (req, res) => {
     });
 });
 
-// Konfigurasi Port Penting untuk Sinkronisasi Cloud & Lokal
+/**
+ * Execution Listener: Initializes server socket binding on designated port coordinates.
+ */
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
     console.log('===================================================');

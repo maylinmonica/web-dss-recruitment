@@ -7,6 +7,10 @@ const pool = new Pool({
   ssl: isInternalConnection ? false : { rejectUnauthorized: false }
 });
 
+/**
+ * Database Initializer Layer: Orchestrates SQL DDL table generations 
+ * and handles localized systemic data seeding iterations.
+ */
 const initDatabase = async () => {
   const queryCreateTableUsers = `
     CREATE TABLE IF NOT EXISTS users (
@@ -42,12 +46,12 @@ const initDatabase = async () => {
   try {
     const client = await pool.connect();
     
-    // 1. Buat Tabel Jika Belum Ada
+    // Schema Provisioning: Execute sequential creation routines for base entities
     await client.query(queryCreateTableUsers);
     await client.query(queryCreateTableApplicants);
     console.log('✅ PostgreSQL: Semua tabel siap digunakan!');
 
-    // 2. SEEDER USERS: Cek spesifik berdasarkan email ta@perusahaan.com
+    // Seeder Routine - Users Matrix: Validates identity listings before populating administrative tokens
     const taCheck = await client.query("SELECT * FROM users WHERE email = 'ta@perusahaan.com'");
     if (taCheck.rows.length === 0) {
       console.log('🌱 Melakukan seeding akun default (TA & Manager)...');
@@ -59,12 +63,11 @@ const initDatabase = async () => {
       console.log('✅ Akun default TA & Manager berhasil dimasukkan!');
     }
 
-    // 3. SEEDER APPLICANTS: Cek spesifik berdasarkan email a1@test.com
+    // Seeder Routine - Applicants Matrix: populates unverified structural mock applicant arrays
     const a1Check = await client.query("SELECT * FROM applicants WHERE email = 'a1@test.com'");
     if (a1Check.rows.length === 0) {
       console.log('🌱 Melakukan seeding data pelamar bawaan (A1 - A10)...');
 
-      // PERBAIKAN: Status diubah menjadi 'Unverified' agar muncul di halaman Validasi Dokumen TA kamu
       const defaultApplicants = [
         { email: "a1@test.com", name: "A1", category: "Final Year", c1_gpa: 3.92, c2_portfolio: 1, c3_experience: 1, c4_merits: 1, c5_skills: 1, c6_salary: 2000000, status: "Unverified" },
         { email: "a2@test.com", name: "A2", category: "Final Year", c1_gpa: 3.78, c2_portfolio: 1, c3_experience: 1, c4_merits: 1, c5_skills: 1, c6_salary: 1800000, status: "Unverified" },
