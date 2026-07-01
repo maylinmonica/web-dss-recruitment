@@ -77,8 +77,8 @@ exports.submitApplication = async (req, res) => {
         let transcriptName = 'Transkrip_Nilai_Terakhir.pdf';
 
         if (req.files) {
-            if (req.files['cv'] && req.files['cv'].length > 0) cvName = req.files['cv'][0].originalname;
-            if (req.files['transcript'] && req.files['transcript'].length > 0) transcriptName = req.files['transcript'][0].originalname;
+            if (req.files['cv'] && req.files['cv'].length > 0) cvName = req.files['cv'][0].filename;
+            if (req.files['transcript'] && req.files['transcript'].length > 0) transcriptName = req.files['transcript'][0].filename;
         }
 
         let parsedCerts = [];
