@@ -119,20 +119,19 @@ function Apply() {
     const parsedGpa = parseFloat(gpa);
     if (isNaN(parsedGpa) || parsedGpa < 0 || parsedGpa > 4.00) {
       setNotice({
-        title: "Validasi Gagal",
-        description: "Format Nilai IPK tidak sesuai ketentuan skala 0.00 - 4.00.",
+        title: "Validasi Formulir Gagal",
+        description: "Format akumulasi nilai IPK tidak sesuai dengan ketentuan batas skala 0.00 hingga 4.00.",
         type: "warning"
       });
       setLoading(false);
       return;
     }
 
-    // Direct base-10 conversion to eliminate IEEE 754 precision rounding issues
     const parsedSalary = parseInt(salary, 10);
     if (isNaN(parsedSalary) || parsedSalary <= 0) {
       setNotice({
-        title: "Validasi Gagal",
-        description: "Nominal kompensasi harus berupa angka bulat positif murni.",
+        title: "Validasi Formulir Gagal",
+        description: "Nominal ekspektasi uang saku harus diisi berupa nilai angka bulat positif murni.",
         type: "warning"
       });
       setLoading(false);
@@ -141,8 +140,8 @@ function Apply() {
 
     if (parsedSalary > 99999999) {
       setNotice({
-        title: "Batas Maksimal Terlampaui",
-        description: "Nilai pengisian nominal kompensasi bulanan melebihi batas sistem.",
+        title: "Batas Pengisian Terlampaui",
+        description: "Nominal pengisian ekspektasi uang saku bulanan melebihi batas maksimum sistem.",
         type: "warning"
       });
       setLoading(false);
@@ -186,7 +185,7 @@ function Apply() {
       if (response.data.status === 'Success') {
         setNotice(response.data.ui_notice || {
           title: "Pendaftaran Berhasil",
-          description: "Seluruh berkas kelayakan administrasi Anda telah aman tersimpan.",
+          description: "Seluruh berkas kelayakan dokumen administrasi Anda telah berhasil disimpan ke sistem pusat.",
           type: "success"
         });
         setName(''); setGpa(''); setSalary(''); setPortfolioUrl('');
@@ -196,7 +195,7 @@ function Apply() {
     } catch (error) {
       setNotice(error.response?.data?.ui_notice || {
         title: "Gagal Mengirimkan Berkas",
-        description: "Terjadi kendala transmisi data menuju jaringan server rekrutmen.",
+        description: "Terjadi gangguan koneksi jaringan menuju server repositori rekrutmen pusat.",
         type: "error"
       });
     } finally {
@@ -492,6 +491,7 @@ function Apply() {
                 <span className="text-[10px] text-slate-400 leading-normal block mt-1">Sertakan bukti piagam pencapaian kompetisi akademik maupun non-akademik sebagai berkas pendukung proses kualifikasi berkas administrasi.</span>
               </div>
 
+              {/* ACTION BUTTON */}
               <div className="pt-2">
                 <button type="submit" disabled={loading} className="w-full bg-slate-950 hover:bg-sky-600 text-white font-semibold py-3.5 rounded-full text-xs uppercase tracking-wider transition-all duration-300 shadow-sm flex items-center justify-center gap-2">
                   <Send className="w-3.5 h-3.5" />
