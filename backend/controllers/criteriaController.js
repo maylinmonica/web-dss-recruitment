@@ -1,8 +1,10 @@
 const { pool } = require('../db');
 const { readCriteria, saveCriteria } = require('../dataStore');
 
-
-// 1. GET: Mengambil konfigurasi kriteria saat ini
+/**
+ * Request Handler: Retrieves current criteria configuration.
+ * Fetches weighting and attribute parameters from the local JSON datastore.
+ */
 exports.getCriteria = async (req, res) => {
     try {
         const criteria = readCriteria();
@@ -23,7 +25,11 @@ exports.getCriteria = async (req, res) => {
     }
 };
 
-// 2. PUT: Memperbarui bobot dan atribut kriteria (Fungsi HR Manager)
+/**
+ * Request Handler: Updates criteria weights and attributes configuration.
+ * Validates absolute boundary allocations before persisting to the local data store.
+ * Restricted to HR Manager clearance level.
+ */
 exports.updateCriteria = async (req, res) => {
     const { weights, attributes } = req.body;
 
@@ -39,10 +45,10 @@ exports.updateCriteria = async (req, res) => {
     }
 
     try {
-        // Validasi Akumulasi Nilai Bobot Wajib 100% (1.0)
+        // Constraint Validation: Ensures the aggregated weight accumulation equals exactly 100% (1.0)
         const totalWeight = Object.values(weights).reduce((sum, value) => sum + parseFloat(value), 0);
         
-        // Menggunakan toleransi desimal untuk menghindari pembulatan javascript floating-point
+        // Precision Handling: Utilizes epsilon decimal tolerance to mitigate JavaScript floating-point arithmetic rounding anomalies
         if (Math.abs(totalWeight - 1.0) > 0.0001) {
             return res.status(400).json({
                 status: "Fail",
@@ -54,6 +60,7 @@ exports.updateCriteria = async (req, res) => {
             });
         }
 
+        // Persistence Routine: Commits the validated criteria configuration state overwriting the previous rule mapping
         const updatedConfig = { weights, attributes };
         saveCriteria(updatedConfig);
 
@@ -61,7 +68,7 @@ exports.updateCriteria = async (req, res) => {
             status: "Success",
             ui_notice: {
                 title: "Konfigurasi Diperbarui",
-                description: "Bobot kepentingan kriteria berhasil diubah. Seluruh peringkat TOPSIS otomatis menyesuaikan.",
+                description: "Bobot kepentingan kriteria berhasil diubah. Seluruh matriks peringkat evaluasi otomatis menyesuaikan.",
                 type: "success"
             },
             data: updatedConfig
