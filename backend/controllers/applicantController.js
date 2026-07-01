@@ -331,6 +331,8 @@ exports.getPerankingan = async (req, res) => {
 
         const labelKategori = category === 'All' ? 'Semua Kategori' : category;
 
+       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+
         return res.status(200).json({
             status: "Success",
             ui_notice: { title: "Analisis Berhasil", description: `Peringkat rekomendasi kelompok ${labelKategori} sukses diperbarui.`, type: "success" },
