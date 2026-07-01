@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
+const fs = require('fs'); // Tambahan modul untuk melacak file fisik
 
 dotenv.config();
 
@@ -20,13 +21,32 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/applicants', require('./routes/applicantRoutes')); 
 app.use('/api/criteria', require('./routes/criteriaRoutes'));
 
-// 🛠️ PERBAIKAN MASTER: Jalur Pengaman Ganda Penyimpanan Berkas Fisik Pelamar
-// Mencakup segala kemungkinan root directory eksekusi pada server lokal maupun Cloud Railway
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
-app.use('/uploads', express.static(path.join(process.cwd(), 'backend', 'uploads')));
+// 🛠️ PERBAIKAN: Memastikan folder 'uploads' selalu dibuat paksa agar server tidak kebingungan
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+    console.log(`📁 Sistem: Folder uploads otomatis dibuat di lokasi -> ${uploadDir}`);
+}
 
-// Rute Dasar untuk Pengujian Konektivitas Utama
+// Mengekspos folder uploads agar bisa diunduh oleh Manager/TA
+app.use('/uploads', express.static(uploadDir));
+
+// 🚨 RADAR DETEKTIF: Jalur khusus untuk ngintip isi folder uploads di Railway
+app.get('/api/debug-folder', (req, res) => {
+    try {
+        const files = fs.readdirSync(uploadDir);
+        res.json({
+            status: "Success",
+            lokasi_folder_asli_di_railway: uploadDir,
+            jumlah_file_yang_tersisa: files.length,
+            daftar_nama_file: files
+        });
+    } catch (error) {
+        res.status(500).json({ status: "Error", pesan: error.message });
+    }
+});
+
+// Rute Dasar
 app.get('/', (req, res) => {
     res.json({ 
         status: "Success",
@@ -34,7 +54,6 @@ app.get('/', (req, res) => {
     });
 });
 
-// Konfigurasi Port Penting untuk Sinkronisasi Cloud & Lokal
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
     console.log('===================================================');
