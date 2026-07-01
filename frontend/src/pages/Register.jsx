@@ -15,8 +15,8 @@ function Register() {
   const navigate = useNavigate();
 
   /**
-   * Authentication Session Guard: Intercepts active credential objects.
-   * Auto-dispatches registered active entities away from onboarding workflows.
+   * Session route guard validation matrix.
+   * Intercepts unauthenticated mounts and forces state redirection based on validated access token.
    */
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -30,8 +30,8 @@ function Register() {
   }, [navigate]);
 
   /**
-   * Layout Notification Life-Cycle Tracker: Destroys notice alerts
-   * automatically after the layout runtime threshold exceeds 5000ms.
+   * Notice banner lifecycle observer hook.
+   * Disposes current active alert notice references from state array post countdown timeout.
    */
   useEffect(() => {
     if (notice) {
@@ -41,8 +41,8 @@ function Register() {
   }, [notice]);
 
   /**
-   * Account Provision Controller Pipeline: Dispatches registration schemas 
-   * to authorization targets after parameters meet validation specifications.
+   * Account registration transaction controller pipeline.
+   * Validates state structural attributes before forwarding payload array to system endpoints.
    */
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -80,9 +80,8 @@ function Register() {
         });
         
         /**
-         * Intentional Onboarding View Latency Buffer: 2500ms Execution Delay.
-         * Holds current registration layout scope allowing the user sufficient window 
-         * to verify account creation messages before firing terminal context routing.
+         * Deliberate interface transition delay cadence.
+         * Grants sufficient interface compilation time to render the success state notification.
          */
         setTimeout(() => {
           navigate('/login');
@@ -114,7 +113,7 @@ function Register() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(14,165,233,0.08),_transparent_35%),radial-gradient(circle_at_bottom_left,_rgba(15,23,42,0.03),_transparent_30%)] pointer-events-none" />
 
       <nav className="relative z-10 border-b border-slate-200/80 bg-[#F5F7FB]/50 backdrop-blur-sm">
-        <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-6 py-5 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5 group shrink-0">
             <div className="bg-slate-950 text-white p-1.5 rounded-md group-hover:bg-sky-600 transition-colors duration-300 shadow-sm">
               <Cpu className="w-4 h-4" />
@@ -125,7 +124,7 @@ function Register() {
       </nav>
 
       <div className="flex-1 flex items-center justify-center p-6 relative z-10">
-        <div className="w-full max-w-md bg-white rounded-3xl border border-slate-200/60 p-8 sm:p-10 shadow-[0_20px_50px_rgba(15,23,42,0.03)]">
+        <div className="w-full max-w-md bg-white rounded-3xl border border-slate-200/60 p-8 sm:p-10 shadow-[0_12px_40px_rgba(15,23,42,0.02)]">
           <div className="space-y-2 mb-8">
             <h2 className="text-3xl font-bold font-display text-slate-950 tracking-tight">Registrasi Akun Baru</h2>
             <p className="text-slate-500 text-xs sm:text-sm leading-relaxed">Daftarkan alamat email resmi Anda untuk mulai melakukan pengisian berkas kualifikasi pendaftaran program.</p>
@@ -134,7 +133,7 @@ function Register() {
           {notice && (
             <div className="mb-6 animate-in fade-in slide-in-from-top-4 duration-300">
               <div className={`p-4 rounded-2xl border bg-white/90 backdrop-blur-md shadow-lg flex items-start gap-3.5 relative overflow-hidden ${
-                notice.type === 'success' ? 'border-emerald-100' : notice.type === 'warning' ? 'border-amber-100' : 'border-rose-100'
+                notice.type === 'success' ? 'border-emerald-100' : 'border-rose-100'
               }`}>
                 <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${
                   notice.type === 'success' ? 'bg-emerald-500' : notice.type === 'warning' ? 'bg-amber-500' : 'bg-rose-500'
@@ -224,7 +223,7 @@ function Register() {
       </div>
 
       <footer className="relative z-10 border-t border-slate-200 text-[11px] text-slate-400 font-medium bg-[#F5F7FB]/30">
-        <div className="max-w-6xl mx-auto px-6 py-5 text-center sm:text-left">&copy; 2026 CoreNexus Labs. All Rights Reserved.</div>
+        <div className="max-w-4xl mx-auto px-6 py-5 text-center sm:text-left">&copy; 2026 CoreNexus Labs. All Rights Reserved.</div>
       </footer>
     </div>
   );
