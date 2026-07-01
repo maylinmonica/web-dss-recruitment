@@ -1,13 +1,17 @@
 const multer = require('multer');
 const path = require('path');
 
-// Konfigurasi penyimpanan file disk
+/**
+ * Storage Engine Configuration: Defines disk storage subsystem behaviors
+ * for processing incoming multipart form-data binary attachments.
+ */
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, path.join(__dirname, '../uploads/')); // Disimpan ke backend/uploads
+        // Directory Mapping Layer: Resolves target absolute local storage path for file ingestion
+        cb(null, path.join(__dirname, '../uploads/')); 
     },
     filename: function (req, file, cb) {
-        // Mengunci nama file agar tetap asli sesuai yang diunggah pelamar
+        // Payload Identity Tracking: Retains original raw metadata filename parameters from the source file header
         cb(null, file.originalname);
     }
 });
