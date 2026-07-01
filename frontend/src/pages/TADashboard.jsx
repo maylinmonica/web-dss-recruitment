@@ -14,7 +14,6 @@ function TADashboard() {
   const [loading, setLoading] = useState(true);
   const [selectedApplicant, setSelectedApplicant] = useState(null);
   
-  // State manajemen penilaian rubrik kualitatif
   const [c2_portfolio, setC2Portfolio] = useState('3');
   const [c3_experience, setC3Experience] = useState('3');
   const [c4_merits, setC4Merits] = useState('3');
@@ -30,11 +29,16 @@ function TADashboard() {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.data.status === 'Success') {
-        setApplicants(response.data.data);
+        /**
+         * 🛠️ FIX 1: Mengurutkan antrean berdasarkan pendaftaran paling awal (ID Terkecil)
+         * Menerapkan standarisasi urutan kerja FIFO yang konsisten untuk tim peninjau dokumen berkas.
+         */
+        const sortedData = (response.data.data || []).sort((a, b) => parseInt(a.id, 10) - parseInt(b.id, 10));
+        setApplicants(sortedData);
       }
       setLoading(false);
     } catch (error) {
-      console.error("Hambatan koordinasi data antrean pelamar:", error.message);
+      console.error("Data Synchronization Error:", error.message);
       setLoading(false);
     }
   };
@@ -50,12 +54,22 @@ function TADashboard() {
     }
   }, [notice]);
 
+  /**
+   * Mengaktifkan workspace peninjauan dokumen serta melakukan reset/mapping rubrik penilaian.
+   * 🛠️ FIX 2: Memaksa fallback ke nilai default '3' jika data kualifikasi kandidat masih kosong (nilai awal sistem 1/0).
+   */
   const openAuditWorkspace = (applicant) => {
     setSelectedApplicant(applicant);
-    setC2Portfolio(applicant.c2_portfolio?.toString() || '3');
-    setC3Experience(applicant.c3_experience?.toString() || '3');
-    setC4Merits(applicant.c4_merits?.toString() || '3');
-    setC5Skills(applicant.c5_skills?.toString() || '3');
+    
+    const validPortfolio = applicant.c2_portfolio && applicant.c2_portfolio > 1 ? applicant.c2_portfolio.toString() : '3';
+    const validExperience = applicant.c3_experience && applicant.c3_experience > 1 ? applicant.c3_experience.toString() : '3';
+    const validMerits = applicant.c4_merits && applicant.c4_merits > 1 ? applicant.c4_merits.toString() : '3';
+    const validSkills = applicant.c5_skills && applicant.c5_skills > 1 ? applicant.c5_skills.toString() : '3';
+
+    setC2Portfolio(validPortfolio);
+    setC3Experience(validExperience);
+    setC4Merits(validMerits);
+    setC5Skills(validSkills);
   };
 
   const handleVerifyScores = async (e) => {
@@ -79,7 +93,7 @@ function TADashboard() {
     } catch (error) {
       setNotice(error.response?.data?.ui_notice || {
         title: "Gagal Menyimpan Evaluasi",
-        description: "Terjadi hambatan interaksi menuju repositori server lokal.",
+        description: "Terjadi hambatan interaksi menuju repositori jaringan lokal.",
         type: "error"
       });
     } finally {
@@ -114,21 +128,20 @@ function TADashboard() {
 
         {!selectedApplicant ? (
           
-          // TAMPILAN INDEX: Tabel Antrean Utama Pelamar
           <main className="flex-1 p-6 sm:p-10 max-w-5xl w-full mx-auto space-y-8 relative z-10 animate-in fade-in duration-150">
             <div className="space-y-1">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-100 uppercase tracking-wide">Talent Pool Evaluation</div>
-              <h2 className="text-2xl sm:text-3xl font-bold font-display text-slate-950 tracking-tight">Panel Validasi Kualifikasi</h2>
-              <p className="text-slate-500 text-xs sm:text-sm">Evaluasi kompetensi portofolio, rekam jejak capaian prestasi, serta tentukan bobot penilaian kualitatif berkas pelamar magang.</p>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-100 uppercase tracking-wide">Validasi Dokumen</div>
+              <h2 className="text-2xl sm:text-3xl font-bold font-display text-slate-950 tracking-tight">Panel Verifikasi Kualifikasi</h2>
+              <p className="text-slate-500 text-xs sm:text-sm">Melakukan peninjauan dokumen kompetensi berkas administrasi serta memberikan penilaian kualitatif pelamar magang secara terpusat.</p>
             </div>
 
             <div className="bg-white rounded-3xl border border-slate-200/60 shadow-[0_12px_40px_rgba(15,23,42,0.02)] overflow-hidden">
               <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                 <div className="flex items-center gap-2.5">
                   <Users className="w-4 h-4 text-slate-400" />
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">Berkas Masuk Pelamar</h3>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">Antrean Masuk Berkas Pelamar</h3>
                 </div>
-                <span className="px-2.5 py-1 text-[10px] font-mono font-bold bg-slate-100 border border-slate-200 rounded-md text-slate-600">{applicants.length} Berkas Total</span>
+                <span className="px-2.5 py-1 text-[10px] font-mono font-bold bg-slate-100 border border-slate-200 rounded-md text-slate-600">{applicants.length} Berkas Masuk</span>
               </div>
 
               {loading ? (
@@ -140,9 +153,9 @@ function TADashboard() {
                       <tr className="border-b border-slate-100 bg-slate-50/30 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                         <th className="px-6 py-4">Informasi Pelamar</th>
                         <th className="px-6 py-4">Kelompok Posisi &amp; Kompensasi</th>
-                        <th className="px-6 py-4">IPK</th>
-                        <th className="px-6 py-4">Status Berkas</th>
-                        <th className="px-6 py-4 text-right">Aksi Audit</th>
+                        <th className="px-6 py-4">IPK terakhir</th>
+                        <th className="px-6 py-4">Status Verifikasi</th>
+                        <th className="px-6 py-4 text-right">Tindakan Seleksi</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 text-slate-700">
@@ -156,13 +169,12 @@ function TADashboard() {
                             <div className="text-xs font-medium text-slate-600">{app.category === 'Final Year' ? 'Mahasiswa Tingkat Akhir' : 'Lulusan Baru'}</div>
                             <div className="text-[11px] text-sky-600 font-mono font-semibold mt-0.5">Rp {app.c6_salary?.toLocaleString('id-ID')} / bln</div>
                           </td>
-                          <td className="px-6 py-4 font-mono text-xs font-bold text-slate-900">{app.c1_gpa?.toFixed(2)}</td>
+                          <td className="px-6 py-4 font-mono text-xs font-bold text-slate-900">{app.c1_gpa ? Number(app.c1_gpa).toFixed(2) : '0.00'}</td>
                           <td className="px-6 py-4">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${app.status === 'Verified' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-amber-50 text-amber-700 border-amber-100 animate-pulse'}`}>{app.status === 'Verified' ? 'Terverifikasi' : 'Belum Diaudit'}</span>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${app.status === 'Verified' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-amber-50 text-amber-700 border-amber-100 animate-pulse'}`}>{app.status === 'Verified' ? 'Selesai Diverifikasi' : 'Belum Ditinjau'}</span>
                           </td>
                           <td className="px-6 py-4 text-right">
-                            {/* PERBAIKAN: Mengubah tombol hitam stark menjadi Biru Sky Brand Premium */}
-                            <button onClick={() => openAuditWorkspace(app)} className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-sky-600 text-white hover:bg-sky-700 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all shadow-sm">{app.status === 'Verified' ? 'Tinjau Ulang' : 'Mulai Audit'}<ArrowRight className="w-3 h-3" /></button>
+                            <button onClick={() => openAuditWorkspace(app)} className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-sky-600 text-white hover:bg-sky-700 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all shadow-sm">{app.status === 'Verified' ? 'Tinjau Ulang Berkas' : 'Mulai Audit Berkas'}<ArrowRight className="w-3 h-3" /></button>
                           </td>
                         </tr>
                       ))}
@@ -174,7 +186,6 @@ function TADashboard() {
           </main>
         ) : (
           
-          // TAMPILAN WORKSPACE WORK-DESK: Lembar Review Berkas Utama & Input Rubrik
           <main className="flex-1 p-6 sm:p-10 max-w-5xl w-full mx-auto space-y-6 relative z-10 animate-in fade-in duration-150">
             
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
@@ -192,14 +203,12 @@ function TADashboard() {
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               
-              {/* PANEL KIRI: DOSSIER CAPAIAN & FILE ATTACHMENT PELAMAR */}
               <div className="lg:col-span-7 space-y-6">
                 
-                {/* PERBAIKAN MASTER: Kartu summary diubah dari Hitam Pekat menjadi Putih Bersih dengan Accent Lembut (Bebas dari kode C1/C6) */}
                 <div className="grid grid-cols-2 gap-4 bg-white border border-slate-200 p-5 rounded-2xl shadow-[0_4px_20px_rgba(15,23,42,0.01)]">
                   <div className="space-y-1">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">IPK Akademis Terakhir</span>
-                    <p className="text-lg font-bold font-mono text-emerald-600">{selectedApplicant.c1_gpa?.toFixed(2)} <span className="text-xs text-slate-400 font-normal">/ 4.00</span></p>
+                    <p className="text-lg font-bold font-mono text-emerald-600">{selectedApplicant.c1_gpa ? Number(selectedApplicant.c1_gpa).toFixed(2) : '0.00'} <span className="text-xs text-slate-400 font-normal">/ 4.00</span></p>
                   </div>
                   <div className="space-y-1 border-l border-slate-100 pl-5">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5"><Coins className="w-3.5 h-3.5 text-sky-500" /> Ekspektasi Uang Saku</span>
@@ -216,9 +225,8 @@ function TADashboard() {
                   </div>
                 </div>
 
-                {/* TECH STACK VISUAL CHIPS */}
                 <div className="space-y-2 bg-white p-4 border border-slate-200/60 rounded-2xl shadow-sm">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block flex items-center gap-1.5"><Terminal className="w-3.5 h-3.5" /> Fokus Penguasaan Teknologi &amp; Rumpun Keahlian</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block flex items-center gap-1.5"><Terminal className="w-3.5 h-3.5" /> Rumpun Keahlian Utama</span>
                   {selectedApplicant.skillsList && selectedApplicant.skillsList.length > 0 ? (
                     <div className="flex flex-wrap gap-1.5 pt-1">
                       {selectedApplicant.skillsList.map((s, idx) => (
@@ -230,7 +238,6 @@ function TADashboard() {
                   )}
                 </div>
 
-                {/* METADATA DESKRIPSI SERTIFIKAT & PIAGAM */}
                 <div className="border border-slate-200/60 bg-white p-5 rounded-2xl space-y-4 shadow-sm">
                   <div>
                     <span className="text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 rounded px-2 py-0.5 uppercase tracking-wide inline-block mb-2">Sertifikasi ({selectedApplicant.certs?.length || 0} Dokumen)</span>
@@ -256,7 +263,6 @@ function TADashboard() {
 
               </div>
 
-              {/* PANEL KANAN: INPUT RUBRIK & SMART EVALUATION SYSTEM */}
               <div className="lg:col-span-5 space-y-4">
                 <div className="bg-white rounded-2xl border border-slate-200/60 p-5 shadow-sm">
                   <form onSubmit={handleVerifyScores} className="space-y-4">
@@ -264,7 +270,7 @@ function TADashboard() {
                     <div className="p-3.5 bg-sky-50/50 border border-sky-100 rounded-xl flex items-start gap-2.5">
                       <HelpCircle className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />
                       <div className="text-[11px] text-sky-900 leading-relaxed">
-                        <span className="font-bold">Asistensi Penilaian:</span> Berikan poin 4-5 jika portofolio pelamar interaktif (terkoneksi REST API), memiliki sertifikasi industri (BNSP/AWS), atau melampirkan rekam jejak juara nasional.
+                        <span className="font-bold">Asistensi Penilaian:</span> Berikan poin 4-5 jika portofolio pelamar interaktif (terkoneksi REST API), memiliki sertifikasi industri, atau melampirkan rekam jejak juara nasional.
                       </div>
                     </div>
 
@@ -273,8 +279,8 @@ function TADashboard() {
                       <select value={c2_portfolio} onChange={(e) => setC2Portfolio(e.target.value)} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-sky-500">
                         <option value="1">1 - Statis / Tidak Responsif</option>
                         <option value="2">2 - UI Dasar Terpenuhi</option>
-                        <option value="3">3 - Interaktif &amp; Menggunakan REST API</option>
-                        <option value="4">4 - Arsitektur Bersih &amp; State Management</option>
+                        <option value="3">3 - Interaktif &amp; Menggunakan API Eksternal</option>
+                        <option value="4">4 - Arsitektur Bersih &amp; Manajemen State</option>
                         <option value="5">5 - Aplikasi Skala Produksi &amp; Keamanan Tinggi</option>
                       </select>
                     </div>
@@ -285,8 +291,8 @@ function TADashboard() {
                         <option value="1">1 - Belum Memiliki Pengalaman Kerja/Proyek</option>
                         <option value="2">2 - Terlibat Proyek Tugas Kuliah Dasar</option>
                         <option value="3">3 - Pernah Memimpin Proyek Akademis Utama</option>
-                        <option value="4">4 - Pengalaman Magang Industri &lt; 6 Bulan</option>
-                        <option value="5">5 - Pengalaman Kerja Riil &gt; 1 Tahun / Freelance Solid</option>
+                        <option value="4">4 - Pengalaman Magang Industri Terbimbing</option>
+                        <option value="5">5 - Pengalaman Kerja Nyata atau Mandiri yang Solid</option>
                       </select>
                     </div>
 
@@ -294,10 +300,10 @@ function TADashboard() {
                       <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600">Relevansi Capaian Penghargaan &amp; Prestasi</label>
                       <select value={c4_merits} onChange={(e) => setC4Merits(e.target.value)} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-sky-500">
                         <option value="1">1 - Tidak Melampirkan Piagam Penghargaan</option>
-                        <option value="2">2 - Memiliki 1-2 Penghargaan Tingkat Internal Kampus</option>
-                        <option value="3">3 - Memiliki 1 Piagam Juara / Finalis Tingkat Nasional</option>
-                        <option value="4">4 - Akumulasi Multi-Juara (Juara 2/3 Kompetisi Nasional)</option>
-                        <option value="5">5 - Akumulasi Juara Sempurna (Juara 1 Nasional / Internasional)</option>
+                        <option value="2">2 - Memiliki Penghargaan Tingkat Internal Kampus</option>
+                        <option value="3">3 - Memiliki Piagam Juara / Finalis Tingkat Regional</option>
+                        <option value="4">4 - Meraih Multi-Juara Kompetisi Tingkat Nasional</option>
+                        <option value="5">5 - Meraih Juara Utama Tingkat Nasional / Internasional</option>
                       </select>
                     </div>
 
@@ -305,19 +311,18 @@ function TADashboard() {
                       <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600">Akreditasi Sertifikasi Keahlian Teknis</label>
                       <select value={c5_skills} onChange={(e) => setC5Skills(e.target.value)} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-sky-500">
                         <option value="1">1 - Tidak Melampirkan Sertifikat Keahlian</option>
-                        <option value="2">2 - Memiliki Sertifikat Partisipasi Webinar / Workshop</option>
-                        <option value="3">3 - Memiliki Sertifikat Kelulusan Kursus/Bootcamp Eksternal</option>
-                        <option value="4">4 - Memiliki Sertifikasi Industri Nasional Resmi / BNSP</option>
-                        <option value="5">5 - Memiliki Sertifikasi Vendor Global (AWS/Google Cloud)</option>
+                        <option value="2">2 - Memiliki Sertifikat Partisipasi Seminar / Pelatihan</option>
+                        <option value="3">3 - Memiliki Sertifikat Kelulusan Kursus Bidang Terkait</option>
+                        <option value="4">4 - Memiliki Sertifikasi Profesi Industri Tingkat Nasional</option>
+                        <option value="5">5 - Memiliki Sertifikasi Internasional Vendor Global</option>
                       </select>
                     </div>
 
                     <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
                       <button type="button" onClick={() => setSelectedApplicant(null)} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-full text-xs font-bold uppercase tracking-wide transition-colors">Batal</button>
-                      {/* PERBAIKAN: Mengubah tombol submit hitam stark menjadi Biru Sky Brand Premium */}
                       <button type="submit" disabled={submitLoading} className="px-5 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-full text-xs font-bold uppercase tracking-wide transition-all shadow-sm flex items-center gap-1.5">
                         <ClipboardCheck className="w-3.5 h-3.5" />
-                        {submitLoading ? 'Menyimpan...' : 'Kunci Skor'}
+                        {submitLoading ? 'Menyimpan...' : 'Kunci Skor Evaluasi'}
                       </button>
                     </div>
                   </form>
