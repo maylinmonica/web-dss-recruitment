@@ -7,11 +7,13 @@ import {
   FileText, FileCheck, Terminal, ArrowLeft, ArrowRight
 } from 'lucide-react';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 function ManagerDashboard() {
+  const [viewMode, setViewMode] = useState('topsis'); // 'topsis' atau 'history'
   const [category, setCategory] = useState('All');
   const [ranking, setRanking] = useState([]);
+  const [historyList, setHistoryList] = useState([]); // State untuk menampung riwayat data lama
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState(null);
 
@@ -24,6 +26,7 @@ function ManagerDashboard() {
 
   const token = localStorage.getItem('token');
 
+  // Fetch data perankingan aktif metode TOPSIS
   const fetchRanking = async (cat) => {
     setLoading(true);
     try {
@@ -35,14 +38,39 @@ function ManagerDashboard() {
         setRanking(res.data.ranking || []);
       }
     } catch (err) {
-      setNotice({
-        title: 'Gagal Memuat Peringkat',
-        description: 'Tidak dapat terhubung ke server perhitungan nilai kualifikasi.',
-        type: 'error'
-      });
+      showErrorNotice();
     } finally {
       setLoading(false);
     }
+  };
+
+  // Fetch data seluruh riwayat untuk pelamar yang sudah diputuskan
+  const fetchHistoryData = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/applicants`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data.status === 'Success') {
+        // Filter hanya yang sudah mendapat keputusan (Scheduled / Rejected)
+        const decided = res.data.data.filter(app => 
+          app.interviewDetails?.status === 'Scheduled' || app.interviewDetails?.status === 'Rejected'
+        );
+        setHistoryList(decided);
+      }
+    } catch (err) {
+      showErrorNotice();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const showErrorNotice = () => {
+    setNotice({
+      title: 'Gagal Memuat Data',
+      description: 'Tidak dapat terhubung ke server repositori rekrutmen pusat.',
+      type: 'error'
+    });
   };
 
   const handleFetchApplicantDetail = async (id) => {
@@ -75,7 +103,7 @@ function ManagerDashboard() {
       );
       if (res.data.status === 'Success') {
         setNotice(res.data.ui_notice);
-        fetchRanking(category);
+        refreshCurrentView();
         setScheduleModal(null);
         setSelectedApplicant(null);
         setScheduleForm({ date: '', time: '', link: '' });
@@ -91,14 +119,22 @@ function ManagerDashboard() {
     }
   };
 
+  const refreshCurrentView = () => {
+    if (viewMode === 'topsis') {
+      fetchRanking(category);
+    } else {
+      fetchHistoryData();
+    }
+  };
+
   const handleApproveSubmit = (e) => {
     e.preventDefault();
     handleDecision(scheduleModal.id, 'Approved', scheduleForm);
   };
 
-  useEffect(() => { 
-    fetchRanking(category); 
-  }, [category]);
+  useEffect(() => {
+    refreshCurrentView();
+  }, [category, viewMode]);
 
   useEffect(() => {
     if (notice) {
@@ -135,121 +171,165 @@ function ManagerDashboard() {
 
         {!selectedApplicant ? (
           <main className="main-workspace-container flex-1 p-6 sm:p-10 space-y-8 relative z-10 animate-in fade-in duration-150">
-            <div className="space-y-1">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-100 uppercase tracking-wide">Panel Manajer Pembuat Keputusan</div>
-              <h2 className="text-2xl sm:text-3xl font-bold font-display text-slate-950 tracking-tight">Dashboard Perankingan Rekomendasi</h2>
-              <p className="text-slate-500 text-xs sm:text-sm">Pantau hasil rekomendasi otomatisasi peringkat pelamar magang berdasarkan bobot kriteria aktif.</p>
-            </div>
-
-            {/* FILTER KATEGORI */}
-            <div className="flex items-center gap-2.5">
-              <Filter className="w-4 h-4 text-slate-400" />
-              <div className="inline-flex bg-white border border-slate-200 rounded-full p-1 shadow-sm">
-                <button onClick={() => setCategory('All')} className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wide transition-all ${category === 'All' ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Semua Kategori</button>
-                <button onClick={() => setCategory('Final Year')} className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wide transition-all ${category === 'Final Year' ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Mahasiswa Tingkat Akhir</button>
-                <button onClick={() => setCategory('Fresh Graduate')} className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wide transition-all ${category === 'Fresh Graduate' ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Lulusan Baru</button>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-100 uppercase tracking-wide">Panel Manajer Pembuat Keputusan</div>
+                <h2 className="text-2xl sm:text-3xl font-bold font-display text-slate-950 tracking-tight">Dashboard Perankingan Rekomendasi</h2>
+                <p className="text-slate-500 text-xs sm:text-sm">Pantau hasil rekomendasi otomatisasi peringkat pelamar magang berdasarkan bobot kriteria aktif.</p>
               </div>
-              <button onClick={() => fetchRanking(category)} className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:border-sky-400 rounded-full text-[11px] font-bold text-slate-500 hover:text-sky-600 transition-all shadow-sm"><RefreshCw className="w-3.5 h-3.5" /> Segarkan Halaman</button>
-            </div>
-
-            {/* GRAFIK PREFERENSI */}
-            <div className="bg-white rounded-3xl border border-slate-200/60 shadow-[0_12px_40px_rgba(15,23,42,0.02)] overflow-hidden">
-              <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                <div className="flex items-center gap-2.5"><TrendingUp className="w-4 h-4 text-sky-500" /><h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">Visualisasi Nilai Kelayakan Kelompok</h3></div>
-                <span className="px-2.5 py-1 text-[10px] font-mono font-bold bg-sky-50 border border-sky-100 rounded-md text-sky-700">{ranking.length} Kandidat Terdaftar</span>
-              </div>
-              <div className="p-6 space-y-3">
-                {loading ? (
-                  <div className="py-16 text-center text-xs font-bold text-slate-400 uppercase tracking-widest animate-pulse">Menghitung matriks preferensi berkas...</div>
-                ) : ranking.length === 0 ? (
-                  <div className="py-16 text-center text-xs font-bold text-slate-400 uppercase tracking-widest">Belum Ada Pelamar Berstatus Terverifikasi</div>
-                ) : (
-                  ranking.map((r, idx) => (
-                    <div key={r.id} className="space-y-1">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-semibold text-slate-700 flex items-center gap-1.5">{idx < 3 && <Award className={`w-3.5 h-3.5 ${idx === 0 ? 'text-amber-400' : idx === 1 ? 'text-slate-400' : 'text-amber-700/60'}`} />}{r.name}</span>
-                        <span className="font-mono font-bold text-slate-900">{(parseFloat(r.preference) * 100).toFixed(2)}%</span>
-                      </div>
-                      <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div className={`h-full rounded-full transition-all duration-500 ${idx === 0 ? 'bg-sky-500' : idx < 3 ? 'bg-sky-300' : 'bg-slate-300'}`} style={{ width: `${(parseFloat(r.preference) / maxPref) * 100}%` }} />
-                      </div>
-                    </div>
-                  ))
-                )}
+              
+              {/* INTERFACES SWITCHER: Navigasi Antrean vs Riwayat */}
+              <div className="inline-flex bg-white border border-slate-200 rounded-2xl p-1 shadow-sm shrink-0 h-fit">
+                <button onClick={() => setViewMode('topsis')} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${viewMode === 'topsis' ? 'bg-slate-950 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>
+                  <TrendingUp className="w-3.5 h-3.5" /> Antrean TOPSIS
+                </button>
+                <button onClick={() => setViewMode('history')} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${viewMode === 'history' ? 'bg-slate-950 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>
+                  <FileCheck className="w-3.5 h-3.5" /> Riwayat Keputusan
+                </button>
               </div>
             </div>
 
-            {/* TABEL URUTAN REKOMENDASI KANDIDAT */}
-            <div className="bg-white rounded-3xl border border-slate-200/60 shadow-[0_12px_40px_rgba(15,23,42,0.02)] overflow-hidden">
-              <div className="px-6 py-5 border-b border-slate-100 flex items-center gap-2.5 bg-slate-50/50"><Award className="w-4 h-4 text-sky-500" /><h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">Tabel Urutan Urgensi Hasil Seleksi</h3></div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="border-b border-slate-100 bg-slate-50/30 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      <th className="px-6 py-4">Peringkat</th>
-                      <th className="px-6 py-4">Nama Kandidat</th>
-                      <th className="px-6 py-4">Jarak Batas Atas</th>
-                      <th className="px-6 py-4">Jarak Batas Bawah</th>
-                      <th className="px-6 py-4">Nilai Kecocokan</th>
-                      <th className="px-6 py-4">Status Keputusan</th> {/* PERBAIKAN KOSTUMISASI KOLOM BARU */}
-                      <th className="px-6 py-4 text-right">Aksi Peninjauan</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-slate-700">
-                    {ranking.map((r, idx) => (
-                      <tr key={r.id} className="hover:bg-slate-50/50 transition-colors duration-150">
-                        <td className="px-6 py-4 font-mono text-xs font-bold text-slate-900">#{idx + 1}</td>
-                        <td className="px-6 py-4">
-                          <div className="font-semibold text-slate-900 text-sm">{r.name}</div>
-                          {r.interviewDetails?.rescheduleRequest?.requested && (
-                            <div className="mt-1.5 p-2 bg-amber-50 border border-amber-200 text-amber-950 rounded-xl text-[10px] inline-flex items-center gap-1.5 max-w-sm animate-pulse"><AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" /><span>Mengajukan Perubahan Jadwal Sesi</span></div>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 font-mono text-xs text-slate-500">{r.d_plus}</td>
-                        <td className="px-6 py-4 font-mono text-xs text-slate-500">{r.d_minus}</td>
-                        <td className="px-6 py-4 font-mono text-xs font-bold text-slate-900">{r.preference}</td>
-                        
-                        {/* PERBAIKAN: MENAMPILKAN BADGE STATUS KEPUTUSAN KANDIDAT SECARA SCANNABLE */}
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                            r.interviewDetails?.status === 'Scheduled' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
-                            r.interviewDetails?.status === 'Rejected' ? 'bg-rose-50 text-rose-700 border-rose-100' :
-                            'bg-amber-50 text-amber-700 border-amber-100 animate-pulse'
-                          }`}>
-                            {r.interviewDetails?.status === 'Scheduled' ? 'Disetujui Wawancara' :
-                             r.interviewDetails?.status === 'Rejected' ? 'Berkas Ditolak' : 'Menunggu Keputusan'}
-                          </span>
-                        </td>
+            {/* SEKSI HALAMAN KONDISI 1: ANTREAN TOPSIS AKTIF */}
+            {viewMode === 'topsis' ? (
+              <>
+                {/* FILTER KATEGORI */}
+                <div className="flex items-center gap-2.5">
+                  <Filter className="w-4 h-4 text-slate-400" />
+                  <div className="inline-flex bg-white border border-slate-200 rounded-full p-1 shadow-sm">
+                    <button onClick={() => setCategory('All')} className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wide transition-all ${category === 'All' ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Semua Kategori</button>
+                    <button onClick={() => setCategory('Final Year')} className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wide transition-all ${category === 'Final Year' ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Mahasiswa Tingkat Akhir</button>
+                    <button onClick={() => setCategory('Fresh Graduate')} className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wide transition-all ${category === 'Fresh Graduate' ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Lulusan Baru</button>
+                  </div>
+                  <button onClick={() => refreshCurrentView()} className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:border-sky-400 rounded-full text-[11px] font-bold text-slate-500 hover:text-sky-600 transition-all shadow-sm"><RefreshCw className="w-3.5 h-3.5" /> Segarkan Halaman</button>
+                </div>
 
-                        <td className="px-6 py-4 text-right">
-                          {/* PERBAIKAN UX: Merubah gaya tombol secara dinamis berdasarkan status riwayat periksa */}
-                          <button 
-                            onClick={() => handleFetchApplicantDetail(r.id)} 
-                            disabled={detailLoading} 
-                            className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all shadow-sm ${
-                              r.interviewDetails?.status && r.interviewDetails.status !== 'Locked'
-                                ? 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-800'
-                                : 'bg-sky-600 text-white hover:bg-sky-700'
-                            }`}
-                          >
-                            {r.interviewDetails?.status && r.interviewDetails.status !== 'Locked' ? 'Tinjau Ulang' : 'Evaluasi Berkas'}
-                            <ArrowRight className="w-3 h-3" />
-                          </button>
-                        </td>
+                {/* GRAFIK PREFERENSI */}
+                <div className="bg-white rounded-3xl border border-slate-200/60 shadow-[0_12px_40px_rgba(15,23,42,0.02)] overflow-hidden">
+                  <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                    <div className="flex items-center gap-2.5"><TrendingUp className="w-4 h-4 text-sky-500" /><h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">Visualisasi Nilai Kelayakan Kelompok</h3></div>
+                    <span className="px-2.5 py-1 text-[10px] font-mono font-bold bg-sky-50 border border-sky-100 rounded-md text-sky-700">{ranking.length} Kandidat Terdaftar</span>
+                  </div>
+                  <div className="p-6 space-y-3">
+                    {loading ? (
+                      <div className="py-16 text-center text-xs font-bold text-slate-400 uppercase tracking-widest animate-pulse">Menghitung matriks preferensi berkas...</div>
+                    ) : ranking.length === 0 ? (
+                      <div className="py-16 text-center text-xs font-bold text-slate-400 uppercase tracking-widest">Belum Ada Pelamar Berstatus Terverifikasi Aktif</div>
+                    ) : (
+                      ranking.map((r, idx) => (
+                        <div key={r.id} className="space-y-1">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-semibold text-slate-700 flex items-center gap-1.5">{idx < 3 && <Award className={`w-3.5 h-3.5 ${idx === 0 ? 'text-amber-400' : idx === 1 ? 'text-slate-400' : 'text-amber-700/60'}`} />}{r.name}</span>
+                            <span className="font-mono font-bold text-slate-900">{(parseFloat(r.preference) * 100).toFixed(2)}%</span>
+                          </div>
+                          <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                            <div className={`h-full rounded-full transition-all duration-500 ${idx === 0 ? 'bg-sky-500' : idx < 3 ? 'bg-sky-300' : 'bg-slate-300'}`} style={{ width: `${(parseFloat(r.preference) / maxPref) * 100}%` }} />
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* TABEL URUTAN REKOMENDASI KANDIDAT */}
+                <div className="bg-white rounded-3xl border border-slate-200/60 shadow-[0_12px_40px_rgba(15,23,42,0.02)] overflow-hidden">
+                  <div className="px-6 py-5 border-b border-slate-100 flex items-center gap-2.5 bg-slate-50/50"><Award className="w-4 h-4 text-sky-500" /><h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">Tabel Urutan Urgensi Hasil Seleksi</h3></div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="border-b border-slate-100 bg-slate-50/30 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                          <th className="px-6 py-4">Peringkat</th>
+                          <th className="px-6 py-4">Nama Kandidat</th>
+                          <th className="px-6 py-4">Jarak Batas Atas</th>
+                          <th className="px-6 py-4">Jarak Batas Bawah</th>
+                          <th className="px-6 py-4">Nilai Kecocokan</th>
+                          <th className="px-6 py-4">Status Keputusan</th>
+                          <th className="px-6 py-4 text-right">Aksi Peninjauan</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 text-slate-700">
+                        {ranking.map((r, idx) => (
+                          <tr key={r.id} className="hover:bg-slate-50/50 transition-colors duration-150">
+                            <td className="px-6 py-4 font-mono text-xs font-bold text-slate-900">#{idx + 1}</td>
+                            <td className="px-6 py-4">
+                              <div className="font-semibold text-slate-900 text-sm">{r.name}</div>
+                              {r.interviewDetails?.rescheduleRequest?.requested && (
+                                <div className="mt-1.5 p-2 bg-amber-50 border border-amber-200 text-amber-950 rounded-xl text-[10px] inline-flex items-center gap-1.5 max-w-sm animate-pulse"><AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" /><span>Mengajukan Perubahan Jadwal Sesi</span></div>
+                              )}
+                            </td>
+                            <td className="px-6 py-4 font-mono text-xs text-slate-500">{r.d_plus}</td>
+                            <td className="px-6 py-4 font-mono text-xs text-slate-500">{r.d_minus}</td>
+                            <td className="px-6 py-4 font-mono text-xs font-bold text-slate-900">{r.preference}</td>
+                            <td className="px-6 py-4">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border bg-amber-50 text-amber-700 border-amber-100 animate-pulse">
+                                Menunggu Keputusan
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <button onClick={() => handleFetchApplicantDetail(r.id)} disabled={detailLoading} className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all shadow-sm bg-sky-600 text-white hover:bg-sky-700">Evaluasi Berkas <ArrowRight className="w-3 h-3" /></button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </>
+            ) : (
+              
+              /* SEKSI HALAMAN KONDISI 2: TAB RIWAYAT KEPUTUSAN FINAL MANAGER */
+              <div className="bg-white rounded-3xl border border-slate-200/60 shadow-[0_12px_40px_rgba(15,23,42,0.02)] overflow-hidden animate-in fade-in duration-200">
+                <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                  <div className="flex items-center gap-2.5"><FileCheck className="w-4 h-4 text-slate-500" /><h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">Arsip Keputusan Kelayakan Final</h3></div>
+                  <button onClick={() => refreshCurrentView()} className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg text-[11px] font-bold text-slate-600 transition-all"><RefreshCw className="w-3 h-3" /> Sinkronisasi</button>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-100 bg-slate-50/30 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        <th className="px-6 py-4">Nama Pelamar</th>
+                        <th className="px-6 py-4">Kelompok Posisi</th>
+                        <th className="px-6 py-4">Skor IPK</th>
+                        <th className="px-6 py-4">Status Akhir</th>
+                        <th className="px-6 py-4 text-right">Aksi Audit</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-slate-700">
+                      {loading ? (
+                        <tr><td colSpan="5" className="py-12 text-center text-xs font-bold text-slate-400 tracking-widest uppercase animate-pulse">Memuat Arsip Keputusan...</td></tr>
+                      ) : historyList.length === 0 ? (
+                        <tr><td colSpan="5" className="py-12 text-center text-xs font-bold text-slate-400 tracking-widest uppercase">Belum ada riwayat keputusan rekrutmen.</td></tr>
+                      ) : (
+                        historyList.map((app) => (
+                          <tr key={app.id} className="hover:bg-slate-50/50 transition-colors duration-150">
+                            <td className="px-6 py-4 font-semibold text-slate-900 text-sm">{app.name}</td>
+                            <td className="px-6 py-4 text-xs font-medium text-slate-500">{app.category === 'Final Year' ? 'Mahasiswa Tingkat Akhir' : 'Lulusan Baru'}</td>
+                            <td className="px-6 py-4 font-mono text-xs font-bold text-slate-800">{app.c1_gpa?.toFixed(2)}</td>
+                            <td className="px-6 py-4">
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                                app.interviewDetails?.status === 'Scheduled' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'
+                              }`}>
+                                {app.interviewDetails?.status === 'Scheduled' ? 'Lolos Wawancara' : 'Berkas Ditolak'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <button onClick={() => handleFetchApplicantDetail(app.id)} className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all shadow-sm bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-800">Tinjau Ulang <ArrowRight className="w-3 h-3" /></button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
+            )}
           </main>
         ) : (
           
-          /* CONDITION 2: INLINE ACCESSIBLE WORKSPACE VIEW FOR MANAGER */
-         <main className="main-workspace-container flex-1 p-6 sm:p-10 space-y-6 relative z-10 animate-in fade-in duration-200">
+          /* VIEW WORKSPACE UTAMA: AUDIT BERKAS DETIL PELAMAR */
+          <main className="main-workspace-container flex-1 p-6 sm:p-10 space-y-6 relative z-10 animate-in fade-in duration-200">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
               <div className="space-y-0.5">
-                <button onClick={() => setSelectedApplicant(null)} className="inline-flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-sky-600 transition-colors uppercase tracking-wider mb-1"><ArrowLeft className="w-3.5 h-3.5" /> Kembali Ke Pemeringkatan</button>
+                <button onClick={() => setSelectedApplicant(null)} className="inline-flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-sky-600 transition-colors uppercase tracking-wider mb-1"><ArrowLeft className="w-3.5 h-3.5" /> Kembali</button>
                 <h2 className="text-xl sm:text-2xl font-bold font-display text-slate-950 tracking-tight">Audit Dokumen Rekrutmen</h2>
                 <p className="text-xs text-slate-400">Kandidat Aktif: <span className="font-semibold text-slate-600">{selectedApplicant.name} ({selectedApplicant.email})</span></p>
               </div>
@@ -259,14 +339,11 @@ function ManagerDashboard() {
               <div className="lg:col-span-7 space-y-6">
                 <div className="space-y-2">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Verifikasi Berkas Utama (Klik Tautan)</span>
-                  {/* PERBAIKAN LINK DOKUMEN: Paksa mengambil alamat API dasar yang sudah terbukti sukses terkoneksi */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                      <a href={selectedApplicant.portfolioUrl} target="_blank" rel="noreferrer" className="p-3 bg-white border border-slate-200 hover:border-sky-400 rounded-2xl flex items-center justify-between text-xs font-semibold text-sky-600 shadow-sm group transition-all"><span className="truncate">Portofolio Kode</span><ExternalLink className="w-3 h-3 text-slate-400 shrink-0" /></a>
-                      
-                      <a href={`${API_BASE_URL}/uploads/${selectedApplicant.cvName}`} target="_blank" rel="noreferrer" className="p-3 bg-white border border-slate-200 hover:border-sky-400 rounded-2xl flex items-center justify-between text-xs font-semibold text-slate-700 shadow-sm group transition-all"><span className="truncate">Dokumen CV</span><ExternalLink className="w-3 h-3 text-slate-400 group-hover:text-sky-600 shrink-0" /></a>
-                      
-                      <a href={`${API_BASE_URL}/uploads/${selectedApplicant.transcriptName}`} target="_blank" rel="noreferrer" className="p-3 bg-white border border-slate-200 hover:border-sky-400 rounded-2xl flex items-center justify-between text-xs font-semibold text-slate-700 shadow-sm group transition-all"><span className="truncate">Transkrip Nilai</span><ExternalLink className="w-3 h-3 text-slate-400 group-hover:text-sky-600 shrink-0" /></a>
-                    </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <a href={selectedApplicant.portfolioUrl} target="_blank" rel="noreferrer" className="p-3 bg-white border border-slate-200 hover:border-sky-400 rounded-2xl flex items-center justify-between text-xs font-semibold text-sky-600 shadow-sm group transition-all"><span className="truncate">Portofolio Kode</span><ExternalLink className="w-3 h-3 text-slate-400 shrink-0" /></a>
+                    <a href={`${API_BASE_URL}/uploads/${selectedApplicant.cvName}`} target="_blank" rel="noreferrer" className="p-3 bg-white border border-slate-200 hover:border-sky-400 rounded-2xl flex items-center justify-between text-xs font-semibold text-slate-700 shadow-sm group transition-all"><span className="truncate">Dokumen CV</span><ExternalLink className="w-3 h-3 text-slate-400 shrink-0" /></a>
+                    <a href={`${API_BASE_URL}/uploads/${selectedApplicant.transcriptName}`} target="_blank" rel="noreferrer" className="p-3 bg-white border border-slate-200 hover:border-sky-400 rounded-2xl flex items-center justify-between text-xs font-semibold text-slate-700 shadow-sm group transition-all"><span className="truncate">Transkrip Nilai</span><ExternalLink className="w-3 h-3 text-slate-400 group-hover:text-sky-600 shrink-0" /></a>
+                  </div>
                 </div>
 
                 <div className="space-y-2 bg-white p-4 border border-slate-200/60 rounded-2xl shadow-sm">
