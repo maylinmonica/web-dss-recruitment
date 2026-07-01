@@ -233,8 +233,10 @@ exports.getPerankingan = async (req, res) => {
         const allApplicants = dbResult.rows.map(mapRowToApplicant);
         
         const candidates = allApplicants
-            .filter(app => app.status === "Verified" && (category === 'All' || app.category === category))
-            .map(app => ({
+        .filter(app => app.status === "Verified" && 
+                    app.interviewDetails?.status !== "Rejected" && 
+                    (category === 'All' || app.category === category))
+        .map(app => ({
                 ...app,
                 c1_gpa:       parseFloat(app.c1_gpa)       || 0,
                 c2_portfolio:  parseFloat(app.c2_portfolio)  || 0,
