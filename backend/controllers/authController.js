@@ -40,7 +40,7 @@ exports.registerApplicant = async (req, res) => {
                 status: "Fail",
                 ui_notice: {
                     title: "Email Sudah Terdaftar",
-                    description: "Alamat email ini telah digunakan. Silakan gunakan email lain.",
+                    description: "Alamat email ini telah digunakan. Silakan gunakan alamat email lain.",
                     type: "error"
                 }
             });
@@ -58,8 +58,8 @@ exports.registerApplicant = async (req, res) => {
         return res.status(201).json({
             status: "Success",
             ui_notice: {
-                title: "Pendaftaran Akun Sukses",
-                description: "Akun Anda berhasil diaktifkan! Silakan melakukan Log In pada halaman utama.",
+                title: "Registrasi Berhasil",
+                description: "Akun Anda telah diaktifkan. Silakan masuk melalui halaman utama.",
                 type: "success"
             }
         });
@@ -67,7 +67,7 @@ exports.registerApplicant = async (req, res) => {
     } catch (error) {
         return res.status(500).json({
             status: "Error",
-            ui_notice: { title: "Gangguan Server", description: error.message, type: "error" }
+            ui_notice: { title: "Gangguan Sistem", description: error.message, type: "error" }
         });
     }
 };
@@ -79,7 +79,7 @@ exports.registerApplicant = async (req, res) => {
 exports.loginUser = async (req, res) => {
     const { email, password } = req.body;
     try {
-        // Query Execution: Query account registration entities matching current email token
+        // Eksekusi Query: Mengambil data pengguna berdasarkan identitas email
         const userResult = await pool.query('SELECT * FROM users WHERE LOWER(email) = LOWER($1)', [email]);
         const user = userResult.rows[0];
 
@@ -88,7 +88,7 @@ exports.loginUser = async (req, res) => {
                 status: "Fail",
                 ui_notice: { 
                     title: "Email Tidak Terdaftar", 
-                    description: "Alamat email ini belum terdaftar di pangkalan data kami. Silakan registrasi terlebih dahulu.", 
+                    description: "Alamat email belum ditemukan di sistem kami. Harap lakukan registrasi terlebih dahulu.", 
                     type: "warning" 
                 }
             });
@@ -106,7 +106,7 @@ exports.loginUser = async (req, res) => {
                 status: "Fail",
                 ui_notice: { 
                     title: "Kata Sandi Salah", 
-                    description: "Kombinasi kata sandi yang Anda masukkan tidak cocok. Silakan coba kembali.", 
+                    description: "Kombinasi email dan kata sandi tidak sesuai. Silakan coba kembali.", 
                     type: "error" 
                 }
             });
@@ -116,7 +116,7 @@ exports.loginUser = async (req, res) => {
         
         return res.status(200).json({
             status: "Success",
-            ui_notice: { title: "Akses Diberikan", description: `Selamat datang kembali, pendaftaran Anda aktif!`, type: "success" },
+            ui_notice: { title: "Akses Diberikan", description: `Selamat datang kembali, sesi Anda telah aktif!`, type: "success" },
             token,
             user: { email: user.email, role: user.role }
         });
