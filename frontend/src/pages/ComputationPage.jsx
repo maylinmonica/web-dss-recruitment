@@ -14,7 +14,9 @@ const CRITERIA_LABELS = {
   c6: 'Ekspektasi Uang Saku / Gaji'
 };
 
-// Pengganti nama kolom teknis agar lebih bersahabat dan mudah dipahami manusia
+/** 
+ * Mapping dictionary for dense user interface representation 
+ */
 const HUMAN_SHORT_LABELS = {
   c1: 'IPK',
   c2: 'Portofolio',
@@ -42,7 +44,11 @@ function ComputationPage() {
       });
       if (res.data.status === 'Success') setData(res.data);
     } catch (err) {
-      setNotice({ title: 'Gagal Memuat', description: 'Hubungan interaksi menuju server mesin kalkulasi terputus.', type: 'error' });
+      setNotice({ 
+        title: 'Gagal Memuat', 
+        description: 'Koneksi menuju server mesin kalkulasi terputus.', 
+        type: 'error' 
+      });
     } finally {
       setLoading(false);
     }
@@ -65,8 +71,8 @@ function ComputationPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-100 uppercase tracking-wide">Panel Manajer Pembuat Keputusan</div>
-              <h2 className="text-2xl sm:text-3xl font-bold font-display text-slate-950 tracking-tight">Portal Audit Rumus Analisis</h2>
-              <p className="text-slate-500 text-xs sm:text-sm">Memeriksa tahapan kalkulasi matematis metode rekrutmen guna memvalidasi hasil rekomendasi secara empiris.</p>
+              <h2 className="text-2xl sm:text-3xl font-bold font-display text-slate-950 tracking-tight">Portal Audit Transparansi Komputasi</h2>
+              <p className="text-slate-500 text-xs sm:text-sm">Validasi tahapan kalkulasi matematis standardisasi berkas secara empiris guna memverifikasi akurasi hasil keputusan final.</p>
             </div>
           </div>
 
@@ -86,19 +92,19 @@ function ComputationPage() {
           {loading ? (
             <div className="py-24 text-center text-xs font-bold text-slate-400 uppercase tracking-widest animate-pulse">Menghitung Data Komputasi...</div>
           ) : ranking.length === 0 ? (
-            <div className="bg-white rounded-3xl border border-slate-200/60 p-16 text-center text-xs font-bold text-slate-400 uppercase tracking-widest">Belum Ada Pelamar Berstatus Terverifikasi</div>
+            <div className="bg-white rounded-3xl border border-slate-200/60 p-16 text-center text-xs font-bold text-slate-400 uppercase tracking-widest">Belum Ada Pelamar Berstatus Terverifikasi Aktif</div>
           ) : (
             <>
               {/* TAHAP 1 */}
               <Section step="1" title="Alur Dasar Metode Perhitungan" icon={<Calculator className="w-4 h-4 text-sky-600" />}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {[
-                    { label: 'Normalisasi Vektor', formula: 's_ij = x_ij / √(Σ x_kj²)', desc: 'Setiap nilai pembentuk matriks dibagi akar dari jumlah kuadrat seluruh nilai alternatif.' },
-                    { label: 'Matriks Terbobot', formula: 'Nilai Akhir Vektor × Bobot Kriteria', desc: 'Hasil nilai vektor normalisasi dikalikan dengan besaran persentase bobot kriteria kepentingan.' },
-                    { label: 'Batas Solusi Ideal Terbaik', formula: 'Nilai Tertinggi Kriteria Maksimal / Nilai Terendah Kriteria Minimal', desc: 'Pengambilan nilai performa terbaik dari matriks terbobot berdasarkan jenis atribut.' },
-                    { label: 'Batas Solusi Ideal Terburuk', formula: 'Nilai Terendah Kriteria Maksimal / Nilai Tertinggi Kriteria Minimal', desc: 'Pengambilan nilai performa terburuk dari matriks terbobot berdasarkan jenis atribut.' },
-                    { label: 'Jarak Geometris Euclidean', formula: 'D = √Σ(y_ij − A_j)²', desc: 'Pengukuran jarak kedekatan berkas pelamar terhadap batas ideal positif dan negatif.' },
-                    { label: 'Persentase Preferensi Akhir', formula: 'Rasio Jarak Terburuk / Total Jarak Kombinasi', desc: 'Kalkulasi rasio kelayakan. Semakin mendekati angka 1.0000 atau 100%, berkas kandidat semakin direkomendasikan.' },
+                    { label: 'Normalisasi Vektor', formula: 'R_ij = x_ij / √(Σ x_kj²)', desc: 'Transformasi elemen matriks keputusan ke dalam skala nilai yang seragam melalui pembagian kuadrat sumbu vektor.' },
+                    { label: 'Matriks Terbobot', formula: 'V_ij = R_ij × w_j', desc: 'Perkalian elemen normalisasi dengan nilai bobot kepentingan kriteria yang dikonfigurasi aktif.' },
+                    { label: 'Batas Solusi Ideal Positif', formula: 'A+ = (max v_ij | j ∈ Benefit), (min v_ij | j ∈ Cost)', desc: 'Identifikasi nilai performa optimal maksimum untuk kriteria jenis benefit atau nilai minimum untuk kriteria cost.' },
+                    { label: 'Batas Solusi Ideal Negatif', formula: 'A− = (min v_ij | j ∈ Benefit), (max v_ij | j ∈ Cost)', desc: 'Identifikasi nilai performa terendah minimum untuk kriteria jenis benefit atau nilai maksimum untuk kriteria cost.' },
+                    { label: 'Jarak Geometris Euclidean', formula: 'S_i = √Σ(v_ij − A_j)²', desc: 'Pengukuran nilai jarak geometris spasial kuadrat alternatif dari titik batas solusi ideal terbaik dan terburuk.' },
+                    { label: 'Nilai Preferensi Akhir', formula: 'C_i = S_i⁻ / (S_i+ + S_i⁻)', desc: 'Kalkulasi rasio kedekatan relatif terhadap solusi ideal terburuk. Rentang nilai akhir 0.00 hingga 1.00.' },
                   ].map(item => (
                     <div key={item.label} className="p-4 bg-sky-50/40 border border-sky-100 rounded-2xl space-y-2">
                       <p className="text-[10px] font-bold uppercase tracking-wider text-sky-700">{item.label}</p>
@@ -110,14 +116,14 @@ function ComputationPage() {
               </Section>
 
               {/* TAHAP 2 */}
-              <Section step="2" title="Konfigurasi Bobot &amp; Atribut Kepentingan Aktif" icon={<Settings className="w-4 h-4 text-slate-400" />}>
+              <Section step="2" title="Konfigurasi Bobot &amp; Karakteristik Atribut Kriteria" icon={<Settings className="w-4 h-4 text-slate-400" />}>
                 <div className="overflow-x-auto rounded-2xl border border-slate-200/60 bg-white shadow-sm">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
                       <tr className="bg-slate-50/50 border-b border-slate-100 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                         <th className="p-4">Nama Kriteria Penilaian</th>
                         <th className="p-4">Bobot Rasio Desimal</th>
-                        <th className="p-4">Bobot Persentase Keuntungan</th>
+                        <th className="p-4">Bobot Persentase</th>
                         <th className="p-4">Karakteristik Atribut</th>
                       </tr>
                     </thead>
@@ -129,7 +135,7 @@ function ComputationPage() {
                           <td className="p-4 font-mono text-sky-600 font-bold">{(parseFloat(c.weight)*100).toFixed(0)}%</td>
                           <td className="p-4">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${c.attribute === 'benefit' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'}`}>
-                              {c.attribute === 'benefit' ? 'Benefit (Nilai Tinggi Diuntungkan)' : 'Cost (Nilai Rendah Diuntungkan)'}
+                              {c.attribute === 'benefit' ? 'Atribut Maksimalisasi (Benefit)' : 'Atribut Minimalisasi (Cost)'}
                             </span>
                           </td>
                         </tr>
@@ -220,7 +226,6 @@ function ComputationPage() {
                             <div className="flex items-center gap-3">
                               <span className="font-mono font-bold text-slate-900 w-12">{r.preference}</span>
                               <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden shrink-0">
-                                {/* PERBAIKAN: Progress bar diganti ke warna Biru Brand Premium */}
                                 <div className="h-full bg-sky-600 rounded-full" style={{ width: `${parseFloat(r.preference) * 100}%` }} />
                               </div>
                               <span className="text-xs font-mono font-bold text-sky-600">{(parseFloat(r.preference)*100).toFixed(1)}%</span>
