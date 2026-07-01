@@ -1,10 +1,13 @@
 const jwt = require('jsonwebtoken');
 
-// Middleware untuk memvalidasi keberadaan dan keaslian token JWT
+/**
+ * Interceptor Middleware: Validates the presence and cryptographic signature 
+ * of the JSON Web Token (JWT) supplied via request headers.
+ */
 exports.verifyToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     
-    // Memeriksa apakah header Authorization dikirimkan
+    // Boundary Check: Ensure the Authorization header exists within the incoming request context
     if (!authHeader) {
         return res.status(403).json({
             status: "Fail",
@@ -12,12 +15,13 @@ exports.verifyToken = (req, res, next) => {
         });
     }
 
-    // Mengambil token setelah kata 'Bearer '
+    // Token Extraction: Isolate the token literal string from the 'Bearer ' schema structure
     const token = authHeader.split(' ')[1];
 
     try {
         const verified = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = verified; // Menyimpan data user hasil decode ke dalam request
+        // Context Assignment: Inject the verified decoded user payload into the request pipeline
+        req.user = verified; 
         next();
     } catch (error) {
         return res.status(401).json({
@@ -27,9 +31,13 @@ exports.verifyToken = (req, res, next) => {
     }
 };
 
-// Middleware untuk melakukan pembatasan hak akses berdasarkan Peran (Role)
+/**
+ * Guard Middleware: Enforces role-based access control (RBAC) across protected route fragments.
+ * Evaluates contextual claims injected by the token verification layer.
+ */
 exports.authorizeRoles = (...allowedRoles) => {
     return (req, res, next) => {
+        // Authorization Matrix Evaluation: Map authenticated role state against acceptable boundaries
         if (!req.user || !allowedRoles.includes(req.user.role)) {
             return res.status(403).json({
                 status: "Fail",
